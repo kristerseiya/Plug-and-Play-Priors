@@ -43,10 +43,10 @@ if args.prior == 'dct':
 
 elif args.prior == 'dncnn':
 
-    dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', args.lambd, 4)
+    dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth')
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior, img.shape)
     recon = optimizer.run(alpha=0.01, iter=args.iter, return_value='x')
-    
+
 
 mse = tools.compute_mse(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
