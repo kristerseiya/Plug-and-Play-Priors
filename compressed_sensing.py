@@ -10,8 +10,10 @@ import pnp
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', type=str, required=True)
-parser.add_argument('--sample', type=float, default=0.5)
-parser.add_argument('--lambd', type=float, default=0.5)
+parser.add_argument('--sample', type=float, default=0.2)
+parser.add_argument('--lambd', type=float, default=1e-2)
+parser.add_argument('--iter', type=int, default=100)
+parser.add_argument('--prior', type=str, default='dct')
 args = parser.parse_args()
 
 img = Image.open(args.image).convert('L')
@@ -19,30 +21,34 @@ img = np.array(img) / 255.
 
 k = int(img.size * args.sample)
 ri = np.random.choice(img.size, k, replace=False)
-mask = np.zeros(img.shape, dtype=bool)
+mask = np.ones(img.shape, dtype=bool) * False
 mask.T.flat[ri] = True
 y = img.copy()
 y[~mask] = 0.
 
 
-class DCTMap:
-    def __call__(self, x):
-        return tools.dct2d(x)
-
-    def inverse(self, v):
-        return tools.idct2d(v)
-
 mseloss = prox.MSE_CS(y, mask)
-sparse_loss = prox.L1Norm(args.lambd)
-optimizer = pnp.PnP_ADMM(mseloss, sparse_loss, y.shape, DCTMap())
-recon = optimizer.run(iter=100, return_value='x')
+if args.prior == 'dct':
 
-y[~mask] = 1.
+    sparse_prior = prox.L1Norm(args.lambd)
+    class DCT_Transform:
+        def __call__(self, x):
+            return tools.dct2d(x)
 
-plt.subplot(1, 3, 1)
-plt.imshow(tools.image_reformat(img), cmap='gray')
-plt.subplot(1, 3, 2)
-plt.imshow(tools.image_reformat(y), cmap='gray')
-plt.subplot(1, 3, 3)
-plt.imshow(tools.image_reformat(recon), cmap='gray')
-plt.show()
+        def inverse(self, v):
+            return tools.idct2d(v)
+    dct_transform = DCT_Transform()
+    optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, img.shape, transform=dct_transform)
+    recon = optimizer.run(alpha=0.01, iter=args.iter, return_value='x')
+
+elif args.prior == 'dncnn':
+
+    dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', args.lambd, 4)
+    optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior, img.shape)
+    recon = optimizer.run(alpha=0.01, iter=args.iter, return_value='x')
+    
+
+mse = tools.compute_mse(img, recon, reformat=True)
+print('MSE: {:.5f}'.format(mse))
+
+tools.stackview([img, y, recon], width=20)

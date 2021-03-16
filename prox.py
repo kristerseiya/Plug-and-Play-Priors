@@ -1,9 +1,12 @@
 
 import numpy as np
 import numpy.linalg as la
+from prox_tv import tv1_2d as prx_tv
+from DnCNN.utils import load_dncnn
+import torch
+import torch.nn.functional as F
 
-
-# lambd * ||x||_1^2
+# lambd * ||x||_1
 class L1Norm:
     def __init__(self, lambd):
         self.lambd = lambd
@@ -14,8 +17,68 @@ class L1Norm:
     def prox(self, x):
         return np.maximum(np.abs(x) - self.lambd / self.alpha, 0) * np.sign(x)
 
-# 1/2*|| y - Ax ||_2^2
+class TVNorm:
+    def __init__(self, lambd):
+        self.lambd = lambd
+
+    def set(self, alpha):
+        self.alpha = alpha
+
+    def prox(self, x):
+        return prx_tv(x, self.lambd / self.alpha)
+
+class DnCNN_Prior:
+    def __init__(self, model_path, lambd, max_iter):
+        self.net = load_dncnn(model_path)
+        self.max_iter = max_iter
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.lambd = lambd
+
+    def set(self, alpha):
+        self.scale = alpha / self.lambd
+
+    def prox(self, x):
+        x = torch.tensor(x.transpose([1, 0]), dtype=torch.float32, requires_grad=False, device=self.device)
+        x = x.view(1, 1, *x.size())
+        # z = x.clone()
+        # z.requires_grad = True
+        # z_optim = torch.optim.SGD([z], lr=0.1)
+
+        # for i in range(self.max_iter):
+        #     z_optim.zero_grad()
+        #     loss = self.scale / 2. * F.mse_loss(z, x, reduction='sum')
+        #     loss = loss + torch.norm(z - self.net(z), p='fro')
+        #     loss.backward()
+        #     z_optim.step()
+        #     print(loss.item())
+
+
+        # z = z.cpu()
+        # z = z.detach()
+        # z = z.view(z.size(-2), z.size(-1))
+        # z = z.numpy()
+        # z = z.transpose([1, 0])
+        # return z
+        y = self.net(x)
+        y = y.cpu()
+        y = y.view(y.size(-2), y.size(-1))
+        y = y.numpy()
+        y = y.transpose([1, 0])
+        return y
+
+# 1/2*|| y - x ||_2^2
 class MSE:
+    def __init__(self, y):
+        self.y = y
+
+    def set(self, alpha):
+        self.alpha = alpha
+
+    def prox(self, x):
+        return (self.y + alpha*x) / (1 + self.alpha)
+
+# 1/2*|| y - Ax ||_2^2
+class MSE2:
     def __init__(self, A, y):
         self.y = y
         self.Aty = A.T @ y

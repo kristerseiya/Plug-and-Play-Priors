@@ -1,6 +1,13 @@
 
 import numpy as np
 
+class IdentityTransform:
+    def __call__(self, x):
+        return x
+
+    def inverse(self, v):
+        return v
+
 # transform(x) = v
 # transform.inv(v) = x
 class PnP_ADMM:
@@ -8,7 +15,7 @@ class PnP_ADMM:
         self.forward = forward
         self.prior = image_prior
         self.variable_shape = variable_shape
-        self.transform = transform if transform != None else (lambda x: x)
+        self.transform = transform if transform != None else IdentityTransform()
 
     def run(self, alpha=100, iter=100, verbose=True, return_value='both'):
 
@@ -23,7 +30,7 @@ class PnP_ADMM:
             if verbose:
                 print('Iteration #{:d}'.format(i+1))
 
-            x = self.forward.prox(self.transform.inverse(v+u))
+            x = self.forward.prox(self.transform.inverse(v-u))
 
             v = self.prior.prox(self.transform(x)+u)
 

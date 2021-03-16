@@ -83,6 +83,7 @@ class PnP_ADMM:
       # image_prior: image_prior object with set(), prox() methods
       # variable_shape: input shape of image_prior.prox() method
       # transform: transformation between x and v
+      #            if not given, it will assume x = v
 
     def run(self, alpha=100, iter=100, verbose=True, return_value='both'):
       # runs optimization
