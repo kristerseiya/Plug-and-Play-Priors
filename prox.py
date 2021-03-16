@@ -28,37 +28,16 @@ class TVNorm:
         return prx_tv(x, self.lambd / self.alpha)
 
 class DnCNN_Prior:
-    def __init__(self, model_path, lambd, max_iter):
+    def __init__(self, model_path):
         self.net = load_dncnn(model_path)
-        self.max_iter = max_iter
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.lambd = lambd
 
     def set(self, alpha):
-        self.scale = alpha / self.lambd
+        pass
 
     def prox(self, x):
         x = torch.tensor(x.transpose([1, 0]), dtype=torch.float32, requires_grad=False, device=self.device)
         x = x.view(1, 1, *x.size())
-        # z = x.clone()
-        # z.requires_grad = True
-        # z_optim = torch.optim.SGD([z], lr=0.1)
-
-        # for i in range(self.max_iter):
-        #     z_optim.zero_grad()
-        #     loss = self.scale / 2. * F.mse_loss(z, x, reduction='sum')
-        #     loss = loss + torch.norm(z - self.net(z), p='fro')
-        #     loss.backward()
-        #     z_optim.step()
-        #     print(loss.item())
-
-
-        # z = z.cpu()
-        # z = z.detach()
-        # z = z.view(z.size(-2), z.size(-1))
-        # z = z.numpy()
-        # z = z.transpose([1, 0])
-        # return z
         y = self.net(x)
         y = y.cpu()
         y = y.view(y.size(-2), y.size(-1))
