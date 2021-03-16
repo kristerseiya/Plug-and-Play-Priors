@@ -20,6 +20,7 @@ You can write your own forward model class and image prior class, but it must ha
 - self.set(alpha) that takes the Lagrangian multiplier. This is called at the initial stage of optimization.
 - self.prox(x) that computes the proximal operator at a given value x
 
+For consistency, images are normalized by dividing the pixels by 255 !!
 
 ## Examples
 ```python
