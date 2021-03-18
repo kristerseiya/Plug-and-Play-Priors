@@ -71,9 +71,9 @@ class MSE2:
         return self.aAtA_inv @ (self.Aty + alpha*x)
 
 # mse for compressed sensing
-class MSE_CS:
+class MSEwithMask:
     def __init__(self, y, mask):
-        self.y = y
+        self.y = y.copy()
         self.y[~mask] = 0.
         self.mask = mask
 
