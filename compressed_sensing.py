@@ -7,50 +7,71 @@ import argparse
 import tools
 import prox
 import pnp
+import noise
 
+# command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--image', type=str, required=True)
-parser.add_argument('--sample', type=float, default=0.2)
-parser.add_argument('--lambd', type=float, default=1e-2)
-parser.add_argument('--iter', type=int, default=100)
-parser.add_argument('--prior', type=str, default='dct')
+parser.add_argument('--image', help='path to image', type=str, required=True)
+parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
+parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
+parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
+parser.add_argument('--iter', help='number of iteration', type=int, default=100)
+parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\']', type=str, default='dct')
+parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=1e-2)
 args = parser.parse_args()
 
+# read image
 img = Image.open(args.image).convert('L')
 img = np.array(img) / 255.
 
+# do random sampling from the image
 k = int(img.size * args.sample)
 ri = np.random.choice(img.size, k, replace=False)
 mask = np.ones(img.shape, dtype=bool) * False
 mask.T.flat[ri] = True
 y = img.copy()
+if args.noise != 0:
+    y = noise.add_gauss(y, std=args.noise)
 y[~mask] = 0.
 
+# forward model
+mseloss = prox.MSEwithMask(y, mask, input_shape=img.shape)
 
-mseloss = prox.MSEwithMask(y, mask)
+# use sparsity in DCT domain as a prior
 if args.prior == 'dct':
 
-    sparse_prior = prox.L1Norm(args.lambd)
+    # prior
+    sparse_prior = prox.L1Norm(args.lambd, input_shape=img.shape)
+
+    # define transformation from x to v
     class DCT_Transform:
         def __call__(self, x):
             return tools.dct2d(x)
 
         def inverse(self, v):
             return tools.idct2d(v)
-    dct_transform = DCT_Transform()
-    optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, img.shape, transform=dct_transform)
-    recon = optimizer.run(alpha=0.001, iter=args.iter, return_value='x')
 
+    # optimize
+    dct_transform = DCT_Transform()
+    optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
+    recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
+
+# use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth')
-    optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior, img.shape)
-    recon = optimizer.run(alpha=0.01, iter=args.iter, return_value='x')
+    # prior
+    dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape)
+
+    # optimize
+    optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
+    recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
 
 
+# reconstruction quality assessment
 mse = tools.compute_mse(img, recon, reformat=True)
 ssim = tools.compute_ssim(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
 print('SSIM: {:.5f}'.format(ssim))
 
+# viewer
 tools.stackview([img, y, recon], width=20)
