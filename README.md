@@ -24,16 +24,16 @@ You can write your own forward model class and image prior class, but it must ha
 ```python
 class your_forward_or_prior_model:
   def __init__(self):
-    self.input_shape = # input shape
-    # this stores the shape of accepted variable.
+    self.input_shape
+    # this variable stores the shape of accepted variable.
     # this is used to initialize some variables inside the optimization algorithm.
 
   def set(self, alpha):
-    # this takes the Lagrangian multiplier.
+    # this method takes the Lagrangian multiplier.
     # this is called at the initial stage of optimization.
 
   def prox(self, x):
-    # this computes the proximal operator at a given value x
+    # this method computes the proximal operator at a given value x
 ```
 For consistency, images are normalized by dividing the pixels by 255 !!
 
