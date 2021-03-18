@@ -71,7 +71,7 @@ class my_image_prior:
 
 ```python
 class my_transform:
-    def __init__(self, x_shape, v_shape):
+    def __init__(self):
       # initialization if needed
 
     def __call__(self, x):
@@ -85,8 +85,8 @@ class my_transform:
 
 ```python
 y = get_y() # your measurement
-f = my_forward_model()
-g = my_image_prior()
+f = my_forward_model(y, x_shape)
+g = my_image_prior(v_shape)
 t = my_transform()
 optimizer = PnP_ADMM(f, g, transform=t)
 x_hat, v_hat = optimizer.run(alpha=1e-2., iter=100)
