@@ -27,7 +27,7 @@ y = img.copy()
 y[~mask] = 0.
 
 
-mseloss = prox.MSE_CS(y, mask)
+mseloss = prox.MSEwithMask(y, mask)
 if args.prior == 'dct':
 
     sparse_prior = prox.L1Norm(args.lambd)
@@ -39,7 +39,7 @@ if args.prior == 'dct':
             return tools.idct2d(v)
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, img.shape, transform=dct_transform)
-    recon = optimizer.run(alpha=0.01, iter=args.iter, return_value='x')
+    recon = optimizer.run(alpha=0.001, iter=args.iter, return_value='x')
 
 elif args.prior == 'dncnn':
 
@@ -49,6 +49,8 @@ elif args.prior == 'dncnn':
 
 
 mse = tools.compute_mse(img, recon, reformat=True)
+ssim = tools.compute_ssim(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
+print('SSIM: {:.5f}'.format(ssim))
 
 tools.stackview([img, y, recon], width=20)
