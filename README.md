@@ -21,10 +21,20 @@ You need 3 objects to run Plug-and-Play ADMM.
 Variable transformation is a transformation between variables x and v where x is the input argument of forward model and v is the input argument of the prior model. The optimization will run the augmented Lagrangian of constrained optimization, transform(x) = v.
 
 You can write your own forward model class and image prior class, but it must have the following attributes and methods
-- self.input_shape that stores the shape of accepted variable. This is used to initialize some variables inside the optimization algorithm.
-- self.set(alpha) that takes the Lagrangian multiplier. This is called at the initial stage of optimization.
-- self.prox(x) that computes the proximal operator at a given value x
+```python
+class your_forward_or_prior_model:
+  def __init__(self):
+    self.input_shape = # input shape
+    # this stores the shape of accepted variable.
+    # this is used to initialize some variables inside the optimization algorithm.
 
+  def set(self, alpha):
+    # this takes the Lagrangian multiplier.
+    # this is called at the initial stage of optimization.
+
+  def prox(self, x):
+    # this computes the proximal operator at a given value x
+```
 For consistency, images are normalized by dividing the pixels by 255 !!
 
 ## Examples
