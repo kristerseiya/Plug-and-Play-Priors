@@ -4,8 +4,12 @@ This is an attempt of implementation of Plug-and-Play ADMM.
 ## Installation
 
 ```bash
-pip install -r requirements
+pip install -r requirements.txt
 ```
+
+You can download DnCNN weights here
+
+[https://drive.google.com/drive/folders/13kfr3qny7S2xwG9h7v95F5mkWs0OmU0D](https://drive.google.com/drive/folders/13kfr3qny7S2xwG9h7v95F5mkWs0OmU0D)
 
 # Usage
 
