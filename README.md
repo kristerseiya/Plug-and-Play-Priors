@@ -23,8 +23,8 @@ Variable transformation is a transformation between variables x and v where x is
 You can write your own forward model class and image prior class, but it must have the following attributes and methods
 ```python
 class your_forward_or_prior_model:
-  def __init__(self):
-    self.input_shape
+  def __init__(self, input_shape):
+    self.input_shape = input_shape
     # this variable stores the shape of accepted variable.
     # this is used to initialize some variables inside the optimization algorithm.
 
