@@ -3,12 +3,19 @@ from scipy.fftpack import dct, idct
 import numpy as np
 from PIL import Image
 from scipy.signal import fftconvolve as convolve
+from scipy.fftpack import fft, ifft
 
 def idct2d(x):
     return idct(idct(x, axis=0, norm='ortho'), axis=1, norm='ortho')
 
 def dct2d(x):
     return dct(dct(x, axis=0, norm='ortho'), axis=1, norm='ortho')
+
+def ifft2d(x):
+    return ifft(ifft(x, axis=0), axis=1)
+
+def fft2d(x):
+    return fft(fft(x, axis=0), axis=1)
 
 def image_reformat(img):
     img = img * 255
@@ -31,15 +38,24 @@ def compute_mse(x, y, reformat=True):
         y = image_reformat(y)
     return np.mean(np.power(x - y, 2))
 
+def get_gauss2d(h, w, sigma):
+    gauss_1d_w = np.array([np.exp(-(x-w//2)**2/float(2**sigma**2)) for x in range(w)])
+    gauss_1d_w = gauss_1d_w / gauss_1d_w.sum()
+    gauss_1d_h = np.array([np.exp(-(x-h//2)**2/float(2**sigma**2)) for x in range(h)])
+    gauss_1d_h = gauss_1d_h / gauss_1d_h.sum()
+    gauss_2d = np.array([gauss_1d_w * s for s in gauss_1d_h])
+    return gauss_2d
+
 def compute_ssim(img1, img2, window_size=11, sigma=1.5, reformat=True):
 
     if reformat:
         img1 = image_reformat(img1)
         img2 = image_reformat(img2)
 
-    gauss_1d = np.array([np.exp(-(x-window_size//2)**2/float(2**sigma**2)) for x in range(window_size)])
-    gauss_1d = gauss_1d / gauss_1d.sum()
-    gauss_2d = np.matmul(gauss_1d.reshape([-1, 1]), gauss_1d.reshape([1, -1]))
+    # gauss_1d = np.array([np.exp(-(x-window_size//2)**2/float(2**sigma**2)) for x in range(window_size)])
+    # gauss_1d = gauss_1d / gauss_1d.sum()
+    # gauss_2d = np.matmul(gauss_1d.reshape([-1, 1]), gauss_1d.reshape([1, -1]))
+    gauss_2d = get_gauss2d(window_size, window_size, sigma)
 
     mu1 = convolve(img1, gauss_2d, mode='valid')
     mu2 = convolve(img2, gauss_2d, mode='valid')
@@ -55,3 +71,12 @@ def compute_ssim(img1, img2, window_size=11, sigma=1.5, reformat=True):
     numerator = (2 * mu1 * mu2 + c1) * (2 * sigma12 + c2)
     denominator = (np.power(mu1, 2) + np.power(mu2, 2) + c1) * (sigma1 + sigma2 + c2)
     return np.mean(numerator / denominator)
+
+def transposed_correlate(x, window):
+    M, N = window.shape
+    x_M, x_N = x.shape
+    result = np.zeros((x.shape[0]+M-1, x.shape[1]+N-1))
+    for m in range(M):
+        for n in range(N):
+            result[m:m+x_M, n:n+x_N] += window[m, n] * x
+    return result
