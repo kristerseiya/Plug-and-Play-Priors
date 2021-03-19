@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import argparse
+import os
 
 import tools
 import prox
@@ -18,6 +19,7 @@ parser.add_argument('--noise', help='gaussian noise level', type=float, default=
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\']', type=str, default='dct')
 parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=1e-2)
+parser.add_argument('--save', help='a directory to save result', type=str, default=None)
 args = parser.parse_args()
 
 # read image
@@ -84,3 +86,18 @@ print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
 tools.stackview([img, y, recon], width=20)
+
+if args.save != None:
+    if not os.path.exists(args.save):
+        os.makedirs(args.save)
+    image_name = args.image.split('/')[-1]
+    image_name = image_name.split('.')[-2]
+    original_name = image_name + '_orignal.png'
+    compressed_name = image_name + '_compressed' + str(args.sample) + '.png'
+    restored_name = image_name + '_restored.png'
+    original_path = os.path.join(args.save, original_name)
+    compressed_path = os.path.join(args.save, compressed_name)
+    restored_path = os.path.join(args.save, restored_name)
+    Image.fromarray(tools.image_reformat(img), 'L').save(original_path)
+    Image.fromarray(tools.image_reformat(y), 'L').save(compressed_path)
+    Image.fromarray(tools.image_reformat(recon), 'L').save(restored_path)
