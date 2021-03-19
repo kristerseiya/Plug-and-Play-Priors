@@ -36,7 +36,10 @@ def compute_mse(x, y, reformat=True):
     if reformat:
         x = image_reformat(x)
         y = image_reformat(y)
-    return np.mean(np.power(x - y, 2))
+
+    mse = np.mean(np.power(x - y, 2))
+    psnr = 20 * np.log(255 / mse)
+    return mse, psnr
 
 def get_gauss2d(h, w, sigma):
     gauss_1d_w = np.array([np.exp(-(x-w//2)**2/float(2**sigma**2)) for x in range(w)])

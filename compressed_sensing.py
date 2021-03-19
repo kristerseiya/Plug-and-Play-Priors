@@ -76,9 +76,10 @@ elif args.prior == 'tv':
     recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
 
 # reconstruction quality assessment
-mse = tools.compute_mse(img, recon, reformat=True)
+mse, psnr = tools.compute_mse(img, recon, reformat=True)
 ssim = tools.compute_ssim(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
+print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
