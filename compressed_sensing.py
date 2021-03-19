@@ -16,7 +16,7 @@ parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
 parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
-parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\']', type=str, default='dct')
+parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\']', type=str, default='dct')
 parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=1e-2)
 args = parser.parse_args()
 
@@ -66,6 +66,14 @@ elif args.prior == 'dncnn':
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
     recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
 
+elif args.prior == 'tv':
+
+    # prior
+    tv_prior = prox.TVNorm(args.lambd, input_shape=img.shape)
+
+    # optimize
+    optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
+    recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
 
 # reconstruction quality assessment
 mse = tools.compute_mse(img, recon, reformat=True)
