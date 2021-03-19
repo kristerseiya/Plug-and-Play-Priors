@@ -87,6 +87,7 @@ print('SSIM: {:.5f}'.format(ssim))
 # viewer
 tools.stackview([img, y, recon], width=20)
 
+# save result
 if args.save != None:
     if not os.path.exists(args.save):
         os.makedirs(args.save)
