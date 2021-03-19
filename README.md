@@ -1,5 +1,10 @@
-## Description
+# What is Plug-and-Play?
+Plug-and-Play is a way of making optimization of image restoration problem in computational imaging easier by allowing you to flexibly change forward model and image prior.
+
 This is an attempt of implementation of Plug-and-Play ADMM.
+
+## Compressed Sensing
+![Alt text](result/tiger_dncnn.png?raw=true "Title")
 
 ## Installation
 
