@@ -6,7 +6,7 @@ This is an attempt of implementation of Plug-and-Play ADMM.
 ## Compressed Sensing
 ![Alt text](result/tiger_dncnn.png?raw=true "Title")
 
-## Installation
+# Installation
 
 ```bash
 pip install -r requirements.txt
