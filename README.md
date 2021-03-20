@@ -83,7 +83,7 @@ f = my_forward_model(y, x_shape)
 g = my_image_prior(v_shape)
 t = my_transform()
 optimizer = PnP_ADMM(f, g, transform=t)
-x_hat, v_hat = optimizer.run(alpha=1e-2., iter=100)
+x_hat, v_hat = optimizer.run(iter=100, return='both')
 ```
 
 PnP_ADMM class takes the following as input argument
