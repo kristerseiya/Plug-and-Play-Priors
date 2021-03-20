@@ -33,12 +33,9 @@ class your_forward_or_prior_model:
     # this variable stores the shape of accepted variable.
     # this is used to initialize some variables inside the optimization algorithm.
 
-  def set(self, alpha):
-    # this method takes the Lagrangian multiplier.
-    # this is called at the initial stage of optimization.
-
-  def prox(self, x):
+  def __call__(self, x):
     # this method computes the proximal operator at a given value x
+    # for an image prior, output is the estimate of Gaussian-denoised image
 ```
 For consistency, images are normalized by dividing the pixels by 255 !!
 
@@ -50,11 +47,7 @@ class my_forward_model:
       self.input_shape = input_shape
       # do other stuff
 
-    def set(self, alpha):
-      self.alpha = alpha
-      # do other stuff
-
-    def prox(self, x):
+    def __call__(self, x):
       # compute value of proximal operator at x
       return prox_output
 ```
@@ -63,13 +56,9 @@ class my_forward_model:
 class my_image_prior:
     def __init__(self, input_shape):
       self.input_shape = input_shape
-      # initialization if needed
-
-    def set(self, alpha):
-      self.alpha = alpha
       # do other stuff
 
-    def prox(self, x):
+    def __call__(self, x):
       # compute value of proximal operator at x
       return prox_output
 ```
@@ -107,9 +96,8 @@ class PnP_ADMM:
       # transform: transformation between x and v
       #            if not given, it will assume x = v
 
-    def run(self, alpha=1e-2, iter=100, verbose=True, return_value='both'):
+    def run(self, iter=100, verbose=True, return_value='both'):
       # runs optimization
-      # alpha: Lagrangian multiplier, theoretically this should not affect the performance of convex optimization
       # iter: iteration
       # verbose: if true, prints iteration number
       # return_value: if 'both', this will return both x and v,
