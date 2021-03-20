@@ -17,8 +17,8 @@ parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
 parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
-parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\']', type=str, default='dct')
-parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=1e-2)
+parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dct')
+parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=100.)
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
 args = parser.parse_args()
 
@@ -37,7 +37,7 @@ if args.noise != 0:
 y[~mask] = 0.
 
 # forward model
-mseloss = prox.MSEwithMask(y, mask, input_shape=img.shape)
+mseloss = prox.MSEwithMask(y, mask, alpha=args.alpha, input_shape=img.shape)
 
 # use sparsity in DCT domain as a prior
 if args.prior == 'dct':
@@ -56,7 +56,7 @@ if args.prior == 'dct':
     # optimize
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
-    recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, return_value='x')
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
@@ -66,7 +66,7 @@ elif args.prior == 'dncnn':
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
-    recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, return_value='x')
 
 elif args.prior == 'tv':
 
@@ -75,7 +75,14 @@ elif args.prior == 'tv':
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
-    recon = optimizer.run(alpha=args.alpha, iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, return_value='x')
+
+elif args.prior == 'bm3d':
+
+    bm3d_prior = prox.BM3D_Prior(args.lambd, input_shape=img.shape)
+
+    optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
+    recon = optimizer.run(iter=args.iter, return_value='x')
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon, reformat=True)
