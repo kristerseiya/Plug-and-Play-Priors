@@ -38,7 +38,7 @@ def compute_mse(x, y, reformat=True):
         y = image_reformat(y)
 
     mse = np.mean(np.power(x - y, 2))
-    psnr = 20 * np.log(255 / mse)
+    psnr = 10 * np.log10(255**2 / mse)
     return mse, psnr
 
 def get_gauss2d(h, w, sigma):
@@ -55,9 +55,6 @@ def compute_ssim(img1, img2, window_size=11, sigma=1.5, reformat=True):
         img1 = image_reformat(img1)
         img2 = image_reformat(img2)
 
-    # gauss_1d = np.array([np.exp(-(x-window_size//2)**2/float(2**sigma**2)) for x in range(window_size)])
-    # gauss_1d = gauss_1d / gauss_1d.sum()
-    # gauss_2d = np.matmul(gauss_1d.reshape([-1, 1]), gauss_1d.reshape([1, -1]))
     gauss_2d = get_gauss2d(window_size, window_size, sigma)
 
     mu1 = convolve(img1, gauss_2d, mode='valid')
