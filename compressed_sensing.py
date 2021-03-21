@@ -18,8 +18,9 @@ parser.add_argument('--lambd', help='coeefficient of prior', type=float, default
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dct')
-parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=100.)
+parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=100.)
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
+parser.add_argument('--relax', type=float, default=1.)
 args = parser.parse_args()
 
 # read image
@@ -56,17 +57,22 @@ if args.prior == 'dct':
     # optimize
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
-    recon = optimizer.run(iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # use trained prior from DnCNN
-elif args.prior == 'dncnn':
+elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50']:
 
-    # prior
-    dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape)
+    if args.prior == 'dncnn15':
+        # prior
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape)
+    elif args.prior == 'dncnn25':
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape)
+    else:
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape)
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
-    recon = optimizer.run(iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 elif args.prior == 'tv':
 
@@ -75,14 +81,14 @@ elif args.prior == 'tv':
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
-    recon = optimizer.run(iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 elif args.prior == 'bm3d':
 
     bm3d_prior = prox.BM3D_Prior(args.lambd, input_shape=img.shape)
 
     optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
-    recon = optimizer.run(iter=args.iter, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon, reformat=True)
@@ -90,6 +96,28 @@ ssim = tools.compute_ssim(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
+
+# dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape)
+# recon15 = dncnn_prior(y)
+# mse, psnr = tools.compute_mse(img, recon15, reformat=True)
+# ssim = tools.compute_ssim(img, recon15, reformat=True)
+# print('MSE: {:.5f}'.format(mse))
+# print('PSNR: {:.5f}'.format(psnr))
+# print('SSIM: {:.5f}'.format(ssim))
+# dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape)
+# recon25 = dncnn_prior(y)
+# mse, psnr = tools.compute_mse(img, recon25, reformat=True)
+# ssim = tools.compute_ssim(img, recon25, reformat=True)
+# print('MSE: {:.5f}'.format(mse))
+# print('PSNR: {:.5f}'.format(psnr))
+# print('SSIM: {:.5f}'.format(ssim))
+# dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape)
+# recon50 = dncnn_prior(y)
+# mse, psnr = tools.compute_mse(img, recon50, reformat=True)
+# ssim = tools.compute_ssim(img, recon50, reformat=True)
+# print('MSE: {:.5f}'.format(mse))
+# print('PSNR: {:.5f}'.format(psnr))
+# print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
 tools.stackview([img, y, recon], width=20)
@@ -102,7 +130,7 @@ if args.save != None:
     image_name = image_name.split('.')[-2]
     original_name = image_name + '_orignal.png'
     compressed_name = image_name + '_compressed' + str(args.sample) + '.png'
-    restored_name = image_name + '_restored.png'
+    restored_name = image_name + '_restored' + str(args.sample) + '.png'
     original_path = os.path.join(args.save, original_name)
     compressed_path = os.path.join(args.save, compressed_name)
     restored_path = os.path.join(args.save, restored_name)
