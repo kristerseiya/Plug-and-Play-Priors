@@ -89,27 +89,3 @@ class MSEwithMask:
 
     def __call__(self, x):
         return self.a * (self.alpha * self.y + x)
-
-# mse for deblurring
-class MSEwithCorrelation:
-    def __init__(self, y, window, input_shape, alpha=1.):
-        self.y = tools.transposed_correlate(y, window)
-        self.window = window
-        self.pad_size = ((window.shape[0]//2, window.shape[0]//2), (window.shape[1]//2, window.shape[1]//2))
-        autocorr = correlate2d(window, window, mode='full')
-        self.input_shape = input_shape
-        shift = (autocorr.shape[0] // 2, autocorr.shape[1] // 2)
-        autocorr = np.pad(autocorr, ((0, input_shape[0]-window.shape[0]), (0, input_shape[1]-window.shape[1])), 'constant', constant_values=((0, 0), (0, 0)))
-        self.autocorr = alpha * np.roll(autocorr, (-shift[0], -shift[1]), axis=(0, 1))
-    #
-    #
-    # def set(self, alpha):
-        # self.alpha = alpha
-        # self.autocorr[0, 0] += alpha
-        self.inv_window = tools.fft2d(self.autocorr)
-
-    def prox(self, x):
-        tmp = self.alpha * self.y + np.pad(x, self.pad_size, 'constant', constant_values=((0, 0), (0, 0)))
-        tmp = tools.fft2d(tmp)
-        result = np.real(tools.ifft2d(tmp / self.inv_window))
-        return result[self.pad_size[0][0]:-self.pad_size[0][1], self.pad_size[1][0]:-self.pad_size[1][1]]
