@@ -47,6 +47,7 @@ def get_gauss2d(h, w, sigma):
     gauss_1d_h = np.array([np.exp(-(x-h//2)**2/float(2**sigma**2)) for x in range(h)])
     gauss_1d_h = gauss_1d_h / gauss_1d_h.sum()
     gauss_2d = np.array([gauss_1d_w * s for s in gauss_1d_h])
+    gauss_2d = gauss_2d / gauss_2d.sum()
     return gauss_2d
 
 def compute_ssim(img1, img2, window_size=11, sigma=1.5, reformat=True):
