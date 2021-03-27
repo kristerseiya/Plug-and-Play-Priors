@@ -66,10 +66,16 @@ class DnCNN(nn.Module):
         m_tail = B.conv(nc, out_nc, mode='C', bias=bias)
 
         self.model = B.sequential(m_head, *m_body, m_tail)
+        self.device = torch.device('cpu')
 
     def forward(self, x):
         n = self.model(x)
         return x-n
+
+    def move(self, device):
+        newself = self.to(device)
+        newself.device = device
+        return newself
 
 
 # --------------------------------------------
