@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import argparse
 import os
+from datetime import datetime
 
 import tools
 import prox
@@ -128,9 +129,11 @@ if args.save != None:
         os.makedirs(args.save)
     image_name = args.image.split('/')[-1]
     image_name = image_name.split('.')[-2]
+    key = datetime.now().strftime('%Y%m%d%H%M%S')
+    rate = str(args.sample).replace('.', '')
     original_name = image_name + '_orignal.png'
-    compressed_name = image_name + '_compressed' + str(args.sample) + '.png'
-    restored_name = image_name + '_restored' + str(args.sample) + '.png'
+    compressed_name = image_name + '_compressed_' + rate + '_' + key + '.png'
+    restored_name = image_name + '_restored_' + rate + '_' + args.prior + '_' + key + '.png'
     original_path = os.path.join(args.save, original_name)
     compressed_path = os.path.join(args.save, compressed_name)
     restored_path = os.path.join(args.save, restored_name)
