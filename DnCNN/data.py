@@ -72,8 +72,8 @@ class ImageDataset(Dataset):
             return self.transform(self.images[idx])
         return self.transform(Image.open(self.images[idx]).convert('L'))
 
-    def split(self, ratios):
-        ratios = ratios / np.sum(ratios)
+    def split(self, train_r, val_r, test_r):
+        ratios = [train_r, val_r, test_r] / (train_r + val_r + test_r)
         total_num = len(self.images)
         indices = list(range(total_num))
         np.random.shuffle(indices)
