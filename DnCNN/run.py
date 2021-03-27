@@ -42,7 +42,7 @@ def test(model, test_loader, noise_lvl):
 
 
 def train(model, optimizer, max_epoch, train_loader,
-          val_loader=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
+          validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
     tolerated = 0
@@ -60,7 +60,7 @@ def train(model, optimizer, max_epoch, train_loader,
         if scheduler is not None:
             scheduler.step()
 
-        if val_loader is not None:
+        if validation is not None:
 
             log[e, 1] = test(model, val_loader)
 
