@@ -62,7 +62,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
         if validation is not None:
 
-            log[e, 1] = test(model, val_loader, noise_lvl)
+            log[e, 1] = test(model, validation, noise_lvl)
 
             print('Val Loss: {:.3f}'.format(log[e, 1]))
 
