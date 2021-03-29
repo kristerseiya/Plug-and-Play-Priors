@@ -41,10 +41,11 @@ class ImageDataSubset(Dataset):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dirs, mode='none', store='ram'):
+    def __init__(self, root_dirs, mode='none', store='ram', repeat=1):
         super().__init__()
         self.images = list()
         self.store = store
+        self.repeat = repeat
 
         if type(root_dirs) != list:
             root_dirs = list(root_dirs)
@@ -65,24 +66,37 @@ class ImageDataset(Dataset):
         self.transform = get_transform(mode)
 
     def __len__(self):
-        return len(self.images)
+        return int(len(self.images) * self.repeat)
 
     def __getitem__(self, idx):
         if self.store == 'ram':
-            return self.transform(self.images[idx])
-        return self.transform(Image.open(self.images[idx]).convert('L'))
+            return self.transform(self.images[idx // self.repeat])
+        return self.transform(Image.open(self.images[idx // self.repeat]).convert('L'))
 
     def split(self, train_r, val_r, test_r):
-        ratios = [train_r, val_r, test_r] / (train_r + val_r + test_r)
+        ratios = np.array([train_r, val_r, test_r]) / (train_r + val_r + test_r)
         total_num = len(self.images)
-        indices = list(range(total_num))
+        indices = np.arange(total_num)
         np.random.shuffle(indices)
 
         split1 = int(np.floor(total_num * ratios[0]))
         split2 = int(np.floor(total_num * ratios[1]))
 
-        train_set = ImageDataSubset(self, indices[:split1], 'train')
-        val_set = ImageDataSubset(self, indices[split1:split1+split2], 'val')
-        test_set = ImageDataSubset(self, indices[split1+split2:], 'test')
+        train_idx_ = indices[:split1] * self.repeat
+        val_idx_ = indices[split1:split1+split2] * self.repeat
+        test_idx_ = indices[split1+split2:] * self.repeat
+
+        train_idx = train_idx_
+        val_idx = val_idx_
+        test_idx = test_idx_
+
+        for i in range(1, self.repeat):
+            train_idx = np.concatenate([train_idx, train_idx_ + i])
+            val_idx = np.concatenate([val_idx, val_idx_ + i])
+            test_idx = np.concatenate([test_idx, test_idx_ + i])
+
+        train_set = ImageDataSubset(self, train_idx, 'train')
+        val_set = ImageDataSubset(self, val_idx, 'val')
+        test_set = ImageDataSubset(self, test_idx, 'test')
 
         return train_set, val_set, test_set
