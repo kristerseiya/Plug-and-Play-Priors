@@ -1,6 +1,6 @@
 
 import torch
-from .model import DnCNN as net
+from . import model.DnCNN as net
 
 def single2tensor4(img):
     return torch.from_numpy(np.ascontiguousarray(img)).permute(2, 0, 1).float().unsqueeze(0)

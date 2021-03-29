@@ -83,10 +83,11 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 if __name__ == '__main__':
 
     import argparse
-    import data
     from torch.utils.data import DataLoader
     from torch.optim import Adam
-    import model
+
+    from . import data
+    from . import model
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', type=str, default=None)
