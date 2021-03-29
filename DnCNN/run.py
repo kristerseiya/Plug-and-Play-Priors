@@ -1,4 +1,5 @@
 
+import torch
 import torch.nn.functional as F
 import numpy as np
 import torch
@@ -13,7 +14,7 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
     for images in train_loader:
         optimizer.zero_grad()
         images = images.to(model.device)
-        noise = torch.randn_like(images) * noise_lvl
+        noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
         output = model(noisy)
         loss = F.mse_loss(output, noise, reduction='sum')
@@ -29,11 +30,10 @@ def test(model, test_loader, noise_lvl):
 
     with torch.no_grad():
         total_loss = 0.
-        n_correct = 0.
         model.eval()
         for images, labels in test_loader:
             images = images.to(model.device)
-            noise = torch.randn_like(images) * noise_lvl
+            noise = torch.randn_like(images) * noise_lvl / 255.
             noisy = images + noise
             output = model(noisy)
             total_loss += F.mse_loss(output, noise, reduction='sum').item()
@@ -41,7 +41,7 @@ def test(model, test_loader, noise_lvl):
     return total_loss / float(dataset_size)
 
 
-def train(model, optimizer, max_epoch, train_loader,
+def train(model, optimizer, max_epoch, train_loader, noise_lvl,
           validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
@@ -53,7 +53,7 @@ def train(model, optimizer, max_epoch, train_loader,
 
         print('Epoch #{:d}'.format(e+1))
 
-        log[e, 0] = train_single_epoch(model, optimizer, train_loader)
+        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl)
 
         print('Train Loss: {:.3f}'.format(log[e, 0]))
 
@@ -62,7 +62,7 @@ def train(model, optimizer, max_epoch, train_loader,
 
         if validation is not None:
 
-            log[e, 1] = test(model, val_loader)
+            log[e, 1] = test(model, val_loader, noise_lvl)
 
             print('Val Loss: {:.3f}'.format(log[e, 1]))
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     import argparse
     import data
-    from torch.utils.data import random_split, DataLoader
+    from torch.utils.data import DataLoader
     from torch.optim import Adam
     import model
 
@@ -96,16 +96,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dataset = data.ImageDataset(args.data_dir, 'none')
-    trainset, valset, testset = dataset.split([0.7, 0.1, 0.2])
+    trainset, valset, testset = dataset.split(0.7, 0.1, 0.2)
     trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True)
     valloader = DataLoader(valset, batch_size=64, shuffle=False)
     testloader = DataLoader(testset, batch_size=64, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    net = model.DnCNN().to(device)
+    net = model.DnCNN().move(device)
     if args.weights != None:
         net.load_state_dict(torch.load(args.weights, map_location=device))
     optimizer = Adam(net.parameters(), lr=1e-4)
-    train(net, optimizer, args.n_epoch, trainloader, valloader, args.save, -1)
+    train(net, optimizer, args.n_epoch, trainloader, 40, valloader, args.save, -1)
 
     torch.save(net.state_dict(), os.path.join(args.save, 'final.pth'))
