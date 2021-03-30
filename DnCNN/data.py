@@ -45,7 +45,7 @@ class ImageDataSubset(Dataset):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dirs, mode='none', store='ram', repeat=1):
+    def __init__(self, root_dirs, mode='none', store='ram', repeat=1, resize=-1):
         super().__init__()
         self.images = list()
         self.store = store
@@ -60,11 +60,15 @@ class ImageDataset(Dataset):
                     fptr = Image.open(file_path).convert('L')
                     file_copy = fptr.copy()
                     fptr.close()
+                    if resize > 0:
+                        file_copy = transforms.Resize(resize)(file_copy)
                     self.images.append(file_copy)
                 elif store == 'disk':
                     self.images.append(file_path)
 
         self.transform = get_transform(mode)
+        if (resize > 0) and (store == 'disk'):
+            self.transform.transforms.insert(0, transforms.Resize(resize))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
