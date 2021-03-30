@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--command', type=str, default='run')
 parser.add_argument('--weights', type=str, default=None)
 parser.add_argument('--image', type=str, default=None)
+parser.add_argument('--noise_lvl', type=float, default=30.)
 parser.add_argument('--data_dir', type=str, default=None)
 parser.add_argument('--n_epoch', type=int, default=20)
 parser.add_argument('--save', type=str, default='result.pth')
@@ -34,7 +35,7 @@ if args.command == 'train':
     net = model.DnCNN().move(device)
     optimizer = Adam(net.parameters(), lr=1e-4)
 
-    log = run.train(net, optimizer, args.n_epoch, trainldr, 30, validation=valldr)
+    log = run.train(net, optimizer, args.n_epoch, trainldr, args.noise_lvl, validation=valldr)
 
     torch.save(net.state_dict(), args.save)
 
