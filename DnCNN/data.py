@@ -17,7 +17,8 @@ def get_transform(mode):
                                        ])
 
     elif mode in ['val', 'test']:
-        transform = transforms.Compose([transforms.ToTensor()])
+        transform = transforms.Compose([transforms.RandomCrop((50, 50)),
+                                        transforms.ToTensor()])
 
     elif mode == 'none':
         transform = lambda x: x

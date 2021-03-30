@@ -31,7 +31,7 @@ def test(model, test_loader, noise_lvl):
     with torch.no_grad():
         total_loss = 0.
         model.eval()
-        for images, labels in test_loader:
+        for images in test_loader:
             images = images.to(model.device)
             noise = torch.randn_like(images) * noise_lvl / 255.
             noisy = images + noise
