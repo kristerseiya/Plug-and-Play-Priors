@@ -58,7 +58,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
         log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl)
 
-        print('Train Loss: {:.3f}'.format(log[e, 0]))
+        print('Train Loss: {:.5f}'.format(log[e, 0]))
 
         if scheduler is not None:
             scheduler.step()
@@ -67,7 +67,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
             log[e, 1] = test(model, validation, noise_lvl)
 
-            print('Val Loss: {:.3f}'.format(log[e, 1]))
+            print('Val Loss: {:.5f}'.format(log[e, 1]))
 
             if (checkpoint_dir != None) and (best_loss > log[e, 1]):
                 best_loss = log[e, 1]
