@@ -17,7 +17,7 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
         noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
         output = model(noisy)
-        loss = F.mse_loss(output, noise, reduction='sum')
+        loss = F.mse_loss(output, images, reduction='sum')
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
@@ -36,7 +36,7 @@ def test(model, test_loader, noise_lvl):
             noise = torch.randn_like(images) * noise_lvl / 255.
             noisy = images + noise
             output = model(noisy)
-            total_loss += F.mse_loss(output, noise, reduction='sum').item()
+            total_loss += F.mse_loss(output, images, reduction='sum').item()
 
     return total_loss / float(dataset_size)
 
