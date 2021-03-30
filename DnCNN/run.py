@@ -17,26 +17,26 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
         noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
         output = model(noisy)
-        loss = F.mse_loss(output, images, reduction='sum')
+        loss = F.mse_loss(output, images)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item()
+        total_loss += loss.item() * images.size(0)
 
     return total_loss / float(dataset_size)
 
-def test(model, test_loader, noise_lvl):
+@torch.no_grad()
+def validate(model, val_loader, noise_lvl):
 
-    dataset_size = len(test_loader.dataset)
+    dataset_size = len(val_loader.dataset)
 
-    with torch.no_grad():
-        total_loss = 0.
-        model.eval()
-        for images in test_loader:
-            images = images.to(model.device)
-            noise = torch.randn_like(images) * noise_lvl / 255.
-            noisy = images + noise
-            output = model(noisy)
-            total_loss += F.mse_loss(output, images, reduction='sum').item()
+    total_loss = 0.
+    model.eval()
+    for images in val_loader:
+        images = images.to(model.device)
+        noise = torch.randn_like(images) * noise_lvl / 255.
+        noisy = images + noise
+        output = model(noisy)
+        total_loss += F.mse_loss(output, images).item() * images.size(0)
 
     return total_loss / float(dataset_size)
 
@@ -62,7 +62,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
         if validation is not None:
 
-            log[e, 1] = test(model, validation, noise_lvl)
+            log[e, 1] = validate(model, validation, noise_lvl)
 
             print('Val Loss: {:.3f}'.format(log[e, 1]))
 
@@ -79,6 +79,21 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
                     return log[0:e, :]
 
     return log
+    
+
+@torch.no_grad()
+def inference(model, image):
+    transform = data.get_transform('test')
+    x = transform(image)
+    x = x.unsqueeze(0)
+    x = x.to(model.device)
+    x = model(x)
+    x = x.squeeze(0)
+    x = x.cpu().numpy()
+    x = x.transpose([2, 1, 0])
+    x = x.squeeze(-1)
+    x = np.clip(x, 0, 1) * 255
+    return Image.fromarray(x.astype(np.uint8), 'L')
 
 if __name__ == '__main__':
 

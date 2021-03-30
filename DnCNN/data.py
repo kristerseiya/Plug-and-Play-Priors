@@ -16,9 +16,12 @@ def get_transform(mode):
                                         transforms.ToTensor(),
                                        ])
 
-    elif mode in ['val', 'test']:
+    elif mode in 'val':
         transform = transforms.Compose([transforms.RandomCrop((50, 50)),
                                         transforms.ToTensor()])
+
+    elif mode in 'test':
+        transform = transforms.Compose([transforms.ToTensor()])
 
     elif mode == 'none':
         transform = lambda x: x
@@ -94,7 +97,6 @@ class ImageDataset(Dataset):
         for i in range(1, self.repeat):
             train_idx = np.concatenate([train_idx, train_idx_ + i])
             val_idx = np.concatenate([val_idx, val_idx_ + i])
-            test_idx = np.concatenate([test_idx, test_idx_ + i])
 
         train_set = ImageDataSubset(self, train_idx, 'train')
         val_set = ImageDataSubset(self, val_idx, 'val')
