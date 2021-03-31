@@ -31,8 +31,12 @@ class TVNorm:
 
 class DnCNN_Prior:
     def __init__(self, model_path, input_shape, device=None):
+
         if device == None:
-            torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = device
+
         self.net = load_dncnn(model_path, device=device)
         self.input_shape = input_shape
 
