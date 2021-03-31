@@ -61,7 +61,8 @@ class ImageDataset(Dataset):
                     file_copy = fptr.copy()
                     fptr.close()
                     if resize > 0:
-                        file_copy = transforms.Resize(resize)(file_copy)
+                        new_size = (int(file_copy.size[0] * resize), int(file_copy.size[1] * resize))
+                        file_copy = transforms.Resize(new_size)(file_copy)
                     self.images.append(file_copy)
                 elif store == 'disk':
                     self.images.append(file_path)
