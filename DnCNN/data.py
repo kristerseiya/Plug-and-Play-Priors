@@ -75,7 +75,7 @@ class ImageDataset(Dataset):
                     self.images.append(file_path)
 
         self.transform = get_transform(mode)
-        if (resize > 0) and (store == 'disk'):
+        if (scale > 0) and (store == 'disk'):
             self.transform.transforms.insert(0, Rescale(scale))
 
     def set_mode(self, mode):
