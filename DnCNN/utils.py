@@ -1,6 +1,6 @@
 
 import torch
-from . import model as net
+from . import model
 
 def single2tensor4(img):
     return torch.from_numpy(np.ascontiguousarray(img)).permute(2, 0, 1).float().unsqueeze(0)
@@ -53,15 +53,15 @@ def load_dncnn(model_path, device=None):
     # load model
     # ----------------------------------------
 
-    model = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='R')
-    # model = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='BR')  # use this if BN is not merged by utils_bnorm.merge_bn(model)
-    model.load_state_dict(torch.load(model_path), strict=True)
-    model.eval()
-    for k, v in model.named_parameters():
+    net = net(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='R')
+    # net = model.DnCNN(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='BR')  # use this if BN is not merged by utils_bnorm.merge_bn(model)
+    net.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+    net.eval()
+    for k, v in net.named_parameters():
         v.requires_grad = False
-    model = model.to(device)
+    net = net.move(device)
 
-    return model
+    return net
     # logger.info('Model path: {:s}'.format(model_path))
     # number_parameters = sum(map(lambda x: x.numel(), model.parameters()))
     # logger.info('Params number: {}'.format(number_parameters))
