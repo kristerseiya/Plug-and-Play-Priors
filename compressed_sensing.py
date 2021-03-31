@@ -2,7 +2,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import torch
 import argparse
 import os
 from datetime import datetime
@@ -62,18 +61,17 @@ if args.prior == 'dct':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # use trained prior from DnCNN
-elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50', 'dncnn30']:
+# elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50', 'dncnn30']:
+elif args.prior == 'dncnn50':
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    if args.prior == 'dncnn15':
-        # prior
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape, device=device)
-    elif args.prior == 'dncnn25':
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape, device=device)
-    elif args.prior == 'dncnn50':
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape, device=device)
-    elif args.prior == 'dncnn30':
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn30.pth', input_shape=img.shape, device=device)
+    # if args.prior == 'dncnn15':
+    #     # prior
+    #     dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape, device=device)
+    # elif args.prior == 'dncnn25':
+    #     dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape, device=device)
+    # el
+    if args.prior == 'dncnn50':
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn50.pth', input_shape=img.shape)
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
@@ -97,31 +95,9 @@ elif args.prior == 'bm3d':
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon, reformat=True)
-ssim = tools.compute_ssim(img, recon, reformat=True)
+# ssim = tools.compute_ssim(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
-print('SSIM: {:.5f}'.format(ssim))
-
-# dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape)
-# recon15 = dncnn_prior(y)
-# mse, psnr = tools.compute_mse(img, recon15, reformat=True)
-# ssim = tools.compute_ssim(img, recon15, reformat=True)
-# print('MSE: {:.5f}'.format(mse))
-# print('PSNR: {:.5f}'.format(psnr))
-# print('SSIM: {:.5f}'.format(ssim))
-# dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape)
-# recon25 = dncnn_prior(y)
-# mse, psnr = tools.compute_mse(img, recon25, reformat=True)
-# ssim = tools.compute_ssim(img, recon25, reformat=True)
-# print('MSE: {:.5f}'.format(mse))
-# print('PSNR: {:.5f}'.format(psnr))
-# print('SSIM: {:.5f}'.format(ssim))
-# dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape)
-# recon50 = dncnn_prior(y)
-# mse, psnr = tools.compute_mse(img, recon50, reformat=True)
-# ssim = tools.compute_ssim(img, recon50, reformat=True)
-# print('MSE: {:.5f}'.format(mse))
-# print('PSNR: {:.5f}'.format(psnr))
 # print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
