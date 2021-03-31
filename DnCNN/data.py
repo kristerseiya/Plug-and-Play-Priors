@@ -24,7 +24,7 @@ def get_transform(mode):
         transform = transforms.Compose([transforms.ToTensor()])
 
     elif mode == 'none':
-        transform = lambda x: x
+        transform = transforms.Compose([])
 
     return transform
 
