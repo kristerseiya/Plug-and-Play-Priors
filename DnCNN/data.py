@@ -44,8 +44,16 @@ class ImageDataSubset(Dataset):
         return len(self.indices)
 
 
+class Rescale():
+    def __init__(self, scale):
+        self.scale = scale
+
+    def __call__(self, x):
+        new_size = (int(x.size[0] * self.scale), int(x.size[1] * self.scale))
+        return transforms.Resize(new_size)(x)
+
 class ImageDataset(Dataset):
-    def __init__(self, root_dirs, mode='none', store='ram', repeat=1, resize=-1):
+    def __init__(self, root_dirs, mode='none', store='ram', repeat=1, scale=-1):
         super().__init__()
         self.images = list()
         self.store = store
@@ -60,16 +68,15 @@ class ImageDataset(Dataset):
                     fptr = Image.open(file_path).convert('L')
                     file_copy = fptr.copy()
                     fptr.close()
-                    if resize > 0:
-                        new_size = (int(file_copy.size[0] * resize), int(file_copy.size[1] * resize))
-                        file_copy = transforms.Resize(new_size)(file_copy)
+                    if scale > 0:
+                        file_copy = Rescale(scale)(file_copy)
                     self.images.append(file_copy)
                 elif store == 'disk':
                     self.images.append(file_path)
 
         self.transform = get_transform(mode)
         if (resize > 0) and (store == 'disk'):
-            self.transform.transforms.insert(0, transforms.Resize(resize))
+            self.transform.transforms.insert(0, Rescale(scale))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
