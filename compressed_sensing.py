@@ -63,13 +63,14 @@ if args.prior == 'dct':
 # use trained prior from DnCNN
 elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50']:
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if args.prior == 'dncnn15':
         # prior
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape)
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape, device=device)
     elif args.prior == 'dncnn25':
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape)
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape, device=device)
     else:
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape)
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape, device=device)
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)

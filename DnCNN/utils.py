@@ -12,7 +12,7 @@ def tensor2single(img):
 
     return img
 
-def load_dncnn(model_path):
+def load_dncnn(model_path, device=None):
 
     # noise_level_img = 25             # noise level for noisy image
     # model_name = 'dncnn_25'          # 'dncnn_15' | 'dncnn_25' | 'dncnn_50' | 'dncnn_gray_blind' | 'dncnn_color_blind' | 'dncnn3'
@@ -46,7 +46,8 @@ def load_dncnn(model_path):
     # logger = logging.getLogger(logger_name)
 
     # need_H = True if H_path is not None else False
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if device == None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # ----------------------------------------
     # load model

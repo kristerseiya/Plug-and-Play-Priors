@@ -30,9 +30,10 @@ class TVNorm:
         return prx_tv(x, self.lambd)
 
 class DnCNN_Prior:
-    def __init__(self, model_path, input_shape):
-        self.net = load_dncnn(model_path)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    def __init__(self, model_path, input_shape, device=None):
+        if device == None:
+            torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.net = load_dncnn(model_path, device=device)
         self.input_shape = input_shape
 
     def __call__(self, x):
