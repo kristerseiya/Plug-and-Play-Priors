@@ -31,8 +31,6 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
         total_loss += loss.item() * images.size(0)
         pbar.update(1)
 
-        progress_bar.update(1)
-
     return total_loss / float(dataset_size)
 
 @torch.no_grad()
