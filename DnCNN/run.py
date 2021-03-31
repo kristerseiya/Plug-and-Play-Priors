@@ -28,7 +28,7 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
     return total_loss / float(dataset_size)
 
 @torch.no_grad()
-def test(model, test_loader, noise_lvl):
+def validate(model, test_loader, noise_lvl):
 
     dataset_size = len(test_loader.dataset)
 
@@ -65,7 +65,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
         if validation is not None:
 
-            log[e, 1] = test(model, validation, noise_lvl)
+            log[e, 1] = validate(model, validation, noise_lvl)
 
             print('Val Loss: {:.5f}'.format(log[e, 1]))
 
@@ -82,7 +82,6 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
                     return log[0:e, :]
 
     return log
-
 
 @torch.no_grad()
 def inference(model, image):
