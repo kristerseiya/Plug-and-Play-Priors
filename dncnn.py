@@ -50,4 +50,6 @@ elif args.command == 'run':
     net.load_state_dict(torch.load(args.weights, map_location=device))
     recon = DnCNN.inference(net, noisy)
 
+    _, psnr = tools.compute_mse(np.array(image), np.array(recon), reformat=False)
+    print('PSNR: {:.3}dB'.format(psnr))
     tools.stackview([np.array(image) / 255., np.array(noisy) / 255., np.array(recon) / 255.])
