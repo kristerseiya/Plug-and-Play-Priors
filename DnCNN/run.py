@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import os
 from PIL import Image
+import tqdm
 
 from . import data
 
@@ -14,6 +15,9 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
 
     total_loss = 0.
     model.train()
+
+    progress_bar = tqdm.tqdm(total=len(train_loader))
+
     for images in train_loader:
         optimizer.zero_grad()
         images = images.to(model.device)
@@ -24,6 +28,8 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * images.size(0)
+
+        progress_bar.update(1)
 
     return total_loss / float(dataset_size)
 
