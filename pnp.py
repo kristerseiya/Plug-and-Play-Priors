@@ -33,9 +33,6 @@ class PnP_ADMM:
             diff = x_relaxed - v
             u = u + diff
 
-            # if verbose:
-            #     print('Difference: {:.5f}'.format(np.linalg.norm(diff, 1)))
-
         if return_value == 'both':
             return x, v
         elif return_value == 'x':
