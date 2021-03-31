@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+import torch
 import argparse
 import os
 from datetime import datetime
@@ -61,7 +62,7 @@ if args.prior == 'dct':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # use trained prior from DnCNN
-elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50']:
+elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50', 'dncnn30']:
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if args.prior == 'dncnn15':
@@ -69,8 +70,10 @@ elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50']:
         dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape, device=device)
     elif args.prior == 'dncnn25':
         dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape, device=device)
-    else:
+    elif args.prior == 'dncnn50':
         dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_50.pth', input_shape=img.shape, device=device)
+    elif args.prior == 'dncnn30':
+        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn30.pth', input_shape=img.shape, device=device)
 
     # optimize
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
