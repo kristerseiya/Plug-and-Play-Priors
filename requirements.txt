@@ -3,4 +3,7 @@ Pillow==8.1.0
 scipy==1.6.1
 prox-tv==3.2.1
 torch==1.8.0
+torchvision==0.9.1
 pybm3d==0.2.1
+tqdm
+
