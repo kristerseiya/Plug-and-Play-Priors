@@ -11,14 +11,11 @@ def get_transform(mode):
     if mode == 'train':
         transform = transforms.Compose([transforms.RandomVerticalFlip(),
                                         transforms.RandomHorizontalFlip(),
-                                        transforms.ColorJitter(),
+                                        # transforms.ColorJitter(),
                                         transforms.ToTensor(),
                                        ])
 
     elif mode in 'val':
-        transform = transforms.Compose([transforms.ToTensor()])
-
-    elif mode in 'test':
         transform = transforms.Compose([transforms.ToTensor()])
 
     elif mode == 'none':
@@ -35,14 +32,15 @@ class Rescale():
         return transforms.Resize(new_size)(x)
 
 class ImageDataSubset(Dataset):
-    def __init__(self, dataset, indices, mode='none', patch_size=-1):
+    def __init__(self, dataset, indices, mode='none', patch_size=-1, repeat=1):
         self.dataset = dataset
         self.indices = indices
+        self.repeat = repeat
         self.patch_size = patch_size
         self.transform = get_transform(mode)
         self.patch_size = patch_size
-        if (patch_size > 0):
-            self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
+        if (self.patch_size > 0):
+            self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
@@ -51,7 +49,7 @@ class ImageDataSubset(Dataset):
 
     def set_patch(self, patch_size):
         if self.patch_size > 0:
-            self.transform.transforms.pop()
+            self.transform.transforms.pop(0)
 
         self.patch_size = patch_size
 
@@ -59,10 +57,10 @@ class ImageDataSubset(Dataset):
             self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
 
     def __getitem__(self, idx):
-        return self.transform(self.dataset[self.indices[idx]])
+        return self.transform(self.dataset.images[self.indices[idx // self.repeat]])
 
     def __len__(self):
-        return len(self.indices)
+        return len(self.indices) * self.repeat
 
 class ImageDataset(Dataset):
     def __init__(self, root_dirs, mode='none', store='ram', repeat=1, scale=-1, patch_size=-1):
@@ -89,10 +87,10 @@ class ImageDataset(Dataset):
                     self.images.append(file_path)
 
         self.transform = get_transform(mode)
-        if (patch_size > 0):
-            self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
-        if (scale > 0) and (store == 'disk'):
-            self.transform.transforms.insert(0, Rescale(scale))
+        if (self.patch_size > 0):
+            self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
+        if (self.scale > 0) and (self.store == 'disk'):
+            self.transform.transforms.insert(0, Rescale(self.scale))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
@@ -125,29 +123,19 @@ class ImageDataset(Dataset):
             return self.transform(self.images[idx // self.repeat])
         return self.transform(Image.open(self.images[idx // self.repeat]).convert('L'))
 
-    def split(self, train_r, val_r, test_r):
-        ratios = np.array([train_r, val_r, test_r]) / (train_r + val_r + test_r)
+    def split(self, *r):
+        ratios = np.array(r)
+        ratios = ratios / ratios.sum()
         total_num = len(self.images)
         indices = np.arange(total_num)
         np.random.shuffle(indices)
 
-        split1 = int(np.floor(total_num * ratios[0]))
-        split2 = int(np.floor(total_num * ratios[1]))
+        subsets = list()
+        start = 0
+        for r in ratios[:-1]:
+            split = int(total_num * r)
+            subsets.append(ImageDataSubset(self, indices[start:start+split]))
+            start = start + split
+        subsets.append(ImageDataSubset(self, indices[start:]))
 
-        train_idx_ = indices[:split1] * self.repeat
-        val_idx_ = indices[split1:split1+split2] * self.repeat
-        test_idx_ = indices[split1+split2:] * self.repeat
-
-        train_idx = train_idx_
-        val_idx = val_idx_
-        test_idx = test_idx_
-
-        for i in range(1, self.repeat):
-            train_idx = np.concatenate([train_idx, train_idx_ + i])
-            val_idx = np.concatenate([val_idx, val_idx_ + i])
-
-        train_set = ImageDataSubset(self, train_idx, 'train', 50)
-        val_set = ImageDataSubset(self, val_idx, 'val', 50)
-        test_set = ImageDataSubset(self, test_idx, 'test')
-
-        return train_set, val_set, test_set
+        return subsets
