@@ -43,7 +43,7 @@ elif args.command == 'run':
 
     image = Image.open(args.image).convert('L')
     x = np.array(image)
-    x = x + np.random.normal(size=x.shape) * 30.
+    x = x + np.random.normal(size=x.shape) * args.noise_lvl
     x = np.clip(x, 0, 255)
     noisy = Image.fromarray(x.astype(np.uint8), 'L')
     net = DnCNN.DnCNN(act_mode='BR')
