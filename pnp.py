@@ -15,7 +15,7 @@ class PnP_ADMM:
         self.prior = image_prior
         self.transform = transform if transform != None else IdentityTransform()
 
-    def run(self, iter=100, verbose=True,  relax=1., return_value='both'):
+    def run(self, iter=100, verbose=True,  relax=0., return_value='both'):
 
         v = np.zeros(self.prior.input_shape)
         u = np.zeros(self.prior.input_shape)
@@ -27,7 +27,7 @@ class PnP_ADMM:
 
             x = self.forward(self.transform.inverse(v-u))
 
-            x_relaxed = relax * self.transform(x) + (1 - relax) * v
+            x_relaxed = (1 - relax) * self.transform(x) + relax * v
             v = self.prior(x_relaxed+u)
 
             diff = x_relaxed - v
