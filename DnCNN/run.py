@@ -62,7 +62,7 @@ def validate(model, test_loader, noise_lvl, cap=False):
     return total_loss / float(dataset_size)
 
 
-def train(model, optimizer, max_epoch, train_loader, noise_lvl, cap=False
+def train(model, optimizer, max_epoch, train_loader, noise_lvl, cap=False,
           validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
