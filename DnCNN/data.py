@@ -74,7 +74,7 @@ class ImageDataSubset(Dataset):
         return len(self.indices) * self.repeat
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dirs, mode='none', store='ram', repeat=1, scale=-1, patch_size=-1):
+    def __init__(self, root_dirs, mode='none', scale=-1, patch_size=-1, repeat=1, store='ram'):
         super().__init__()
         self.images = list()
         self.store = store
