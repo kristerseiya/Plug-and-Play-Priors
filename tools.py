@@ -45,7 +45,7 @@ def get_gauss2d(h, w, sigma):
     gauss_1d_w = np.array([np.exp(-(x-w//2)**2/float(2**sigma**2)) for x in range(w)])
     gauss_1d_w = gauss_1d_w / gauss_1d_w.sum()
     gauss_1d_h = np.array([np.exp(-(x-h//2)**2/float(2**sigma**2)) for x in range(h)])
-    gauss_1d_h = gauss_1d_h / gauss_1d_h.sum()
+    gauss_1d_h = gauss_1d_h
     gauss_2d = np.array([gauss_1d_w * s for s in gauss_1d_h])
     gauss_2d = gauss_2d / gauss_2d.sum()
     return gauss_2d
@@ -60,9 +60,9 @@ def compute_ssim(img1, img2, window_size=11, sigma=1.5, reformat=True):
 
     mu1 = convolve(img1, gauss_2d, mode='valid')
     mu2 = convolve(img2, gauss_2d, mode='valid')
-    sigma1 = convolve(img1 * img1, gauss_2d, mode='valid') - np.power(mu1, 2)
-    sigma2 = convolve(img2 * img2, gauss_2d, mode='valid') - np.power(mu2, 2)
-    sigma12 = convolve(img1 * img2, gauss_2d, mode='valid') - (mu1 * mu2)
+    sigma1 = convolve(gauss_2d, img1 * img1, mode='valid') - np.power(mu1, 2)
+    sigma2 = convolve(gauss_2d, img2 * img2, mode='valid') - np.power(mu2, 2)
+    sigma12 = convolve(gauss_2d, img1 * img2, mode='valid') - (mu1 * mu2)
 
     k1 = 0.01
     k2 = 0.03
