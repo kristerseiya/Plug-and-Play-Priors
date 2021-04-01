@@ -146,8 +146,8 @@ class ImageDataset(Dataset):
             train_idx = np.concatenate([train_idx, train_idx_ + i])
             val_idx = np.concatenate([val_idx, val_idx_ + i])
 
-        train_set = ImageDataSubset(self, train_idx, 'train')
-        val_set = ImageDataSubset(self, val_idx, 'val')
+        train_set = ImageDataSubset(self, train_idx, 'train', 50)
+        val_set = ImageDataSubset(self, val_idx, 'val', 50)
         test_set = ImageDataSubset(self, test_idx, 'test')
 
         return train_set, val_set, test_set
