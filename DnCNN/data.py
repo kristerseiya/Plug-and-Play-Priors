@@ -8,17 +8,17 @@ import numpy as np
 
 
 def get_transform(mode):
-    if mode == 'train':
+    if mode.lower() == 'train':
         transform = transforms.Compose([transforms.RandomVerticalFlip(),
                                         transforms.RandomHorizontalFlip(),
                                         # transforms.ColorJitter(),
                                         transforms.ToTensor(),
                                        ])
 
-    elif mode in 'val':
+    elif mode.lower() in ['val', 'test']:
         transform = transforms.Compose([transforms.ToTensor()])
 
-    elif mode == 'none':
+    elif mode.lower() == 'none':
         transform = transforms.Compose([])
 
     return transform
@@ -42,31 +42,31 @@ class ImageDataSubset(Dataset):
         self.patch_size = patch_size
         if (self.patch_size > 0):
             self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
-        if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+        if (self.dataset.scale > 0) and (self.dataset.store == 'DISK'):
             self.transform.transforms.insert(0, Rescale(self.dataset.scale))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
         if (self.patch_size > 0):
             self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
-        if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+        if (self.dataset.scale > 0) and (self.dataset.store == 'DISK'):
             self.transform.transforms.insert(0, Rescale(self.dataset.scale))
 
     def set_patch(self, patch_size):
         if (self.patch_size > 0):
-            if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+            if (self.dataset.scale > 0) and (self.dataset.store == 'DISK'):
                 self.transform.transforms.pop(1)
             else:
                 self.transform.transforms.pop(0)
         self.patch_size = patch_size
         if (patch_size > 0):
-            if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+            if (self.dataset.scale > 0) and (self.dataset.store == 'DISK'):
                 self.transform.transforms.insert(1, transforms.RandomCrop(patch_size))
             else:
                 self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
 
     def __getitem__(self, idx):
-        if self.dataset.store == 'ram':
+        if self.dataset.store == 'RAM':
             return self.transform(self.dataset.images[self.indices[idx // self.repeat]])
         return self.transform(Image.open(self.dataset.images[self.indices[idx // self.repeat]]).convert('L'))
 
@@ -77,7 +77,7 @@ class ImageDataset(Dataset):
     def __init__(self, root_dirs, mode='none', scale=-1, patch_size=-1, repeat=1, store='ram'):
         super().__init__()
         self.images = list()
-        self.store = store
+        self.store = store.upper()
         self.repeat = repeat
         self.scale = scale
         self.patch_size = patch_size
@@ -87,38 +87,38 @@ class ImageDataset(Dataset):
 
         for root_dir in root_dirs:
             for file_path in glob.glob(os.path.join(root_dir, '*.png')):
-                if store == 'ram':
+                if self.store == 'RAM':
                     fptr = Image.open(file_path).convert('L')
                     file_copy = fptr.copy()
                     fptr.close()
                     if scale > 0:
                         file_copy = Rescale(scale)(file_copy)
                     self.images.append(file_copy)
-                elif store == 'disk':
+                elif self.store == 'DISK':
                     self.images.append(file_path)
 
         self.transform = get_transform(mode)
         if (self.patch_size > 0):
             self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
-        if (self.scale > 0) and (self.store == 'disk'):
+        if (self.scale > 0) and (self.store == 'DISK'):
             self.transform.transforms.insert(0, Rescale(self.scale))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
         if (self.patch_size > 0):
             self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
-        if (self.scale > 0) and (self.store == 'disk'):
+        if (self.scale > 0) and (self.store == 'DISK'):
             self.transform.transforms.insert(0, Rescale(self.scale))
 
     def set_patch(self, patch_size):
         if (self.patch_size > 0):
-            if (self.scale > 0) and (self.store == 'disk'):
+            if (self.scale > 0) and (self.store == 'DISK'):
                 self.transform.transforms.pop(1)
             else:
                 self.transform.transforms.pop(0)
         self.patch_size = patch_size
         if (patch_size > 0):
-            if (self.scale > 0) and (self.store == 'disk'):
+            if (self.scale > 0) and (self.store == 'DISK'):
                 self.transform.transforms.insert(1, transforms.RandomCrop(patch_size))
             else:
                 self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
@@ -127,7 +127,7 @@ class ImageDataset(Dataset):
         return int(len(self.images) * self.repeat)
 
     def __getitem__(self, idx):
-        if self.store == 'ram':
+        if self.store == 'RAM':
             return self.transform(self.images[idx // self.repeat])
         return self.transform(Image.open(self.images[idx // self.repeat]).convert('L'))
 

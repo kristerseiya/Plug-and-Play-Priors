@@ -10,15 +10,15 @@ import sys
 
 from . import data
 
-def train_single_epoch(model, optimizer, train_loader, noise_lvl, clip=False, lossfn='l2'):
+def train_single_epoch(model, optimizer, train_loader, noise_lvl, clip=False, lossfn='L2'):
 
     dataset_size = len(train_loader.dataset)
 
-    if lossfn == 'l2':
+    if lossfn.upper() == 'L2':
         lossfn = F.mse_loss
-    elif lossfn == 'l1':
+    elif lossfn.upper() == 'L1':
         lossfn = F.l1_loss
-        
+
     total_loss = 0.
     model.train()
 
@@ -43,13 +43,13 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl, clip=False, lo
     return total_loss / float(dataset_size)
 
 @torch.no_grad()
-def validate(model, test_loader, noise_lvl, clip=False, lossfn='l2'):
+def validate(model, test_loader, noise_lvl, clip=False, lossfn='L2'):
 
     dataset_size = len(test_loader.dataset)
 
-    if lossfn == 'l2':
+    if lossfn.upper() == 'L2':
         lossfn = F.mse_loss
-    elif lossfn == 'l1':
+    elif lossfn.upper() == 'L1':
         lossfn = F.l1_loss
 
     total_loss = 0.
@@ -72,7 +72,7 @@ def validate(model, test_loader, noise_lvl, clip=False, lossfn='l2'):
     return total_loss / float(dataset_size)
 
 
-def train(model, optimizer, max_epoch, train_loader, noise_lvl, clip=False, lossfn='l2',
+def train(model, optimizer, max_epoch, train_loader, noise_lvl, clip=False, lossfn='L2',
           validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
