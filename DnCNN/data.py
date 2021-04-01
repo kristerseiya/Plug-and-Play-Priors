@@ -33,6 +33,7 @@ class Rescale():
 
 class ImageDataSubset(Dataset):
     def __init__(self, dataset, indices, mode='none', patch_size=-1, repeat=1):
+        super().__init__()
         self.dataset = dataset
         self.indices = indices
         self.repeat = repeat
@@ -41,23 +42,33 @@ class ImageDataSubset(Dataset):
         self.patch_size = patch_size
         if (self.patch_size > 0):
             self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
+        if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+            self.transform.transforms.insert(0, Rescale(self.dataset.scale))
 
     def set_mode(self, mode):
         self.transform = get_transform(mode)
         if (self.patch_size > 0):
             self.transform.transforms.insert(0, transforms.RandomCrop(self.patch_size))
+        if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+            self.transform.transforms.insert(0, Rescale(self.dataset.scale))
 
     def set_patch(self, patch_size):
-        if self.patch_size > 0:
-            self.transform.transforms.pop(0)
-
+        if (self.patch_size > 0):
+            if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+                self.transform.transforms.pop(1)
+            else:
+                self.transform.transforms.pop(0)
         self.patch_size = patch_size
-
         if (patch_size > 0):
-            self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
+            if (self.dataset.scale > 0) and (self.dataset.store == 'disk'):
+                self.transform.transforms.insert(1, transforms.RandomCrop(patch_size))
+            else:
+                self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
 
     def __getitem__(self, idx):
-        return self.transform(self.dataset.images[self.indices[idx // self.repeat]])
+        if self.dataset.store == 'ram':
+            return self.transform(self.dataset.images[self.indices[idx // self.repeat]])
+        return self.transform(Image.open(self.dataset.images[self.indices[idx // self.repeat]]).convert('L'))
 
     def __len__(self):
         return len(self.indices) * self.repeat
@@ -100,15 +111,12 @@ class ImageDataset(Dataset):
             self.transform.transforms.insert(0, Rescale(self.scale))
 
     def set_patch(self, patch_size):
-
         if (self.patch_size > 0):
             if (self.scale > 0) and (self.store == 'disk'):
                 self.transform.transforms.pop(1)
             else:
                 self.transform.transforms.pop(0)
-
         self.patch_size = patch_size
-
         if (patch_size > 0):
             if (self.scale > 0) and (self.store == 'disk'):
                 self.transform.transforms.insert(1, transforms.RandomCrop(patch_size))
