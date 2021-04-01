@@ -19,9 +19,10 @@ parser.add_argument('--lambd', help='coeefficient of prior', type=float, default
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dct')
+parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=100.)
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
-parser.add_argument('--relax', type=float, default=1.)
+parser.add_argument('--relax', type=float, default=0.)
 args = parser.parse_args()
 
 # read image
@@ -61,31 +62,20 @@ if args.prior == 'dct':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # use trained prior from DnCNN
-# elif args.prior in ['dncnn15', 'dncnn25', 'dncnn50', 'dncnn30']:
-elif args.prior == 'dncnn50':
+elif args.prior == 'dncnn':
 
-    # if args.prior == 'dncnn15':
-    #     # prior
-    #     dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_15.pth', input_shape=img.shape, device=device)
-    # elif args.prior == 'dncnn25':
-    #     dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn_25.pth', input_shape=img.shape, device=device)
-    # el
-    if args.prior == 'dncnn50':
-        dncnn_prior = prox.DnCNN_Prior('DnCNN/dncnn50.pth', input_shape=img.shape)
-
-    # optimize
+    dncnn_prior = prox.DnCNN_Prior(args.weights, input_shape=img.shape)
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
+# total variation norm
 elif args.prior == 'tv':
 
-    # prior
     tv_prior = prox.TVNorm(args.lambd, input_shape=img.shape)
-
-    # optimize
     optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
+# block matching with 3D filter
 elif args.prior == 'bm3d':
 
     bm3d_prior = prox.BM3D_Prior(args.lambd, input_shape=img.shape)
@@ -95,10 +85,10 @@ elif args.prior == 'bm3d':
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon, reformat=True)
-# ssim = tools.compute_ssim(img, recon, reformat=True)
+ssim = tools.compute_ssim(img, recon, reformat=True)
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
-# print('SSIM: {:.5f}'.format(ssim))
+print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
 tools.stackview([img, y, recon], width=20)
