@@ -5,25 +5,27 @@ import numpy as np
 import torch
 import os
 from PIL import Image
-import tqdm
+from tqdm import tqdm
 import sys
 
 from . import data
 
-def train_single_epoch(model, optimizer, train_loader, noise_lvl):
+def train_single_epoch(model, optimizer, train_loader, noise_lvl, cap=False):
 
     dataset_size = len(train_loader.dataset)
 
     total_loss = 0.
     model.train()
 
-    pbar = tqdm.tqdm(total=len(train_loader), position=0, leave=False, file=sys.stdout)
+    pbar = tqdm(total=len(train_loader), position=0, leave=False, file=sys.stdout)
 
     for images in train_loader:
         optimizer.zero_grad()
         images = images.to(model.device)
         noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
+        if cap:
+            noisy = torch.clip(noisy, 0, 1)
         output = model(noisy)
         loss = F.mse_loss(output, images)
         loss.backward()
@@ -31,34 +33,36 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl):
         total_loss += loss.item() * images.size(0)
         pbar.update(1)
 
-    tqdm.tqdm.close(pbar)
+    tqdm.close(pbar)
 
     return total_loss / float(dataset_size)
 
 @torch.no_grad()
-def validate(model, test_loader, noise_lvl):
+def validate(model, test_loader, noise_lvl, cap=False):
 
     dataset_size = len(test_loader.dataset)
 
     total_loss = 0.
     model.eval()
 
-    pbar = tqdm.tqdm(total=len(test_loader), position=0, leave=False, file=sys.stdout)
+    pbar = tqdm(total=len(test_loader), position=0, leave=False, file=sys.stdout)
 
     for images in test_loader:
         images = images.to(model.device)
         noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
+        if cap:
+            noisy = torch.clip(noisy, 0, 1)
         output = model(noisy)
         total_loss += F.mse_loss(output, images).item() * images.size(0)
         pbar.update(1)
 
-    tqdm.tqdm.close(pbar)
+    tqdm.close(pbar)
 
     return total_loss / float(dataset_size)
 
 
-def train(model, optimizer, max_epoch, train_loader, noise_lvl,
+def train(model, optimizer, max_epoch, train_loader, noise_lvl, cap=False
           validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
@@ -70,7 +74,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
         print('\nEpoch #{:d}'.format(e+1))
 
-        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl)
+        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl, cap)
 
         print('Train Loss: {:.5f}'.format(log[e, 0]))
 
@@ -79,7 +83,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl,
 
         if validation is not None:
 
-            log[e, 1] = validate(model, validation, noise_lvl)
+            log[e, 1] = validate(model, validation, noise_lvl, cap)
 
             print('Val Loss: {:.5f}'.format(log[e, 1]))
 
