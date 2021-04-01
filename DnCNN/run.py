@@ -10,10 +10,15 @@ import sys
 
 from . import data
 
-def train_single_epoch(model, optimizer, train_loader, noise_lvl, cap=False):
+def train_single_epoch(model, optimizer, train_loader, noise_lvl, clip=False, lossfn='l2'):
 
     dataset_size = len(train_loader.dataset)
 
+    if lossfn == 'l2':
+        lossfn = F.mse_loss
+    elif lossfn == 'l1':
+        lossfn = F.l1_loss
+        
     total_loss = 0.
     model.train()
 
@@ -24,10 +29,10 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl, cap=False):
         images = images.to(model.device)
         noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
-        if cap:
+        if clip:
             noisy = torch.clip(noisy, 0, 1)
         output = model(noisy)
-        loss = F.mse_loss(output, images)
+        loss = lossfn(output, images)
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * images.size(0)
@@ -38,9 +43,14 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl, cap=False):
     return total_loss / float(dataset_size)
 
 @torch.no_grad()
-def validate(model, test_loader, noise_lvl, cap=False):
+def validate(model, test_loader, noise_lvl, clip=False, lossfn='l2'):
 
     dataset_size = len(test_loader.dataset)
+
+    if lossfn == 'l2':
+        lossfn = F.mse_loss
+    elif lossfn == 'l1':
+        lossfn = F.l1_loss
 
     total_loss = 0.
     model.eval()
@@ -51,10 +61,10 @@ def validate(model, test_loader, noise_lvl, cap=False):
         images = images.to(model.device)
         noise = torch.randn_like(images) * noise_lvl / 255.
         noisy = images + noise
-        if cap:
+        if clip:
             noisy = torch.clip(noisy, 0, 1)
         output = model(noisy)
-        total_loss += F.mse_loss(output, images).item() * images.size(0)
+        total_loss += lossfn(output, images).item() * images.size(0)
         pbar.update(1)
 
     tqdm.close(pbar)
@@ -62,7 +72,7 @@ def validate(model, test_loader, noise_lvl, cap=False):
     return total_loss / float(dataset_size)
 
 
-def train(model, optimizer, max_epoch, train_loader, noise_lvl, cap=False,
+def train(model, optimizer, max_epoch, train_loader, noise_lvl, clip=False, lossfn='l2',
           validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
@@ -74,7 +84,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl, cap=False,
 
         print('\nEpoch #{:d}'.format(e+1))
 
-        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl, cap)
+        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl, clip, lossfn)
 
         print('Train Loss: {:.5f}'.format(log[e, 0]))
 
@@ -83,7 +93,7 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl, cap=False,
 
         if validation is not None:
 
-            log[e, 1] = validate(model, validation, noise_lvl, cap)
+            log[e, 1] = validate(model, validation, noise_lvl, clip, lossfn)
 
             print('Val Loss: {:.5f}'.format(log[e, 1]))
 
