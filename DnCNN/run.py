@@ -10,7 +10,9 @@ import sys
 
 from . import data
 
-def train_single_epoch(model, optimizer, train_loader, noise_lvl, clip=False, lossfn='L2'):
+def train_single_epoch(model, optimizer, train_loader,
+                       noise_lvl, clip=False, lossfn='L2',
+                       scheduler=None):
 
     dataset_size = len(train_loader.dataset)
 
@@ -36,6 +38,8 @@ def train_single_epoch(model, optimizer, train_loader, noise_lvl, clip=False, lo
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * images.size(0)
+        if scheduler != None:
+            scheduler.step()
         pbar.update(1)
 
     tqdm.close(pbar)
@@ -73,10 +77,22 @@ def validate(model, test_loader, noise_lvl, clip=False, lossfn='L2'):
 
 
 def train(model, optimizer, max_epoch, train_loader, noise_lvl, clip=False, lossfn='L2',
-          validation=None, scheduler=None, checkpoint_dir=None, max_tolerance=-1):
+          validation=None, scheduler=None, lr_step='epoch',
+          checkpoint_dir=None, max_tolerance=-1):
 
     best_loss = 99999.
     tolerated = 0
+
+    if lr_step == 'epoch':
+        lr_step_per_epoch = True
+    elif lr_step == 'batch':
+        lr_step_per_epoch = False
+    else:
+        lr_step_per_epoch = True
+
+    _scheduler = None
+    if not lr_step_per_epoch:
+        _scheduler = scheduler
 
     log = np.zeros([max_epoch, 2], dtype=np.float)
 
@@ -84,14 +100,15 @@ def train(model, optimizer, max_epoch, train_loader, noise_lvl, clip=False, loss
 
         print('\nEpoch #{:d}'.format(e+1))
 
-        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl, clip, lossfn)
+        log[e, 0] = train_single_epoch(model, optimizer, train_loader, noise_lvl,
+                                       clip, lossfn, _scheduler)
 
         print('Train Loss: {:.5f}'.format(log[e, 0]))
 
-        if scheduler is not None:
+        if scheduler != None and lr_step_per_epoch:
             scheduler.step()
 
-        if validation is not None:
+        if validation != None:
 
             log[e, 1] = validate(model, validation, noise_lvl, clip, lossfn)
 
