@@ -83,9 +83,13 @@ elif args.prior == 'bm3d':
     optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
+
+img = tools.image2uint8(img)
+recon = tools.image2uint8(recon)
+
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon, reformat=True)
-ssim = tools.compute_ssim(img, recon, reformat=True)
+mse, psnr = tools.compute_mse(img, recon)
+ssim = tools.compute_ssim(img, recon)
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
@@ -107,6 +111,6 @@ if args.save != None:
     original_path = os.path.join(args.save, original_name)
     compressed_path = os.path.join(args.save, compressed_name)
     restored_path = os.path.join(args.save, restored_name)
-    Image.fromarray(tools.image_reformat(img), 'L').save(original_path)
-    Image.fromarray(tools.image_reformat(y), 'L').save(compressed_path)
-    Image.fromarray(tools.image_reformat(recon), 'L').save(restored_path)
+    Image.fromarray(tools.image2uint8(img), 'L').save(original_path)
+    Image.fromarray(tools.image2uint8(y), 'L').save(compressed_path)
+    Image.fromarray(tools.image2uint8(recon), 'L').save(restored_path)
