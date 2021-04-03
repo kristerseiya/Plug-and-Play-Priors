@@ -74,7 +74,8 @@ class ImageDataSubset(Dataset):
         return len(self.indices) * self.repeat
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dirs, mode='none', scale=-1, patch_size=-1, repeat=1, store='ram'):
+    def __init__(self, root_dirs, mode='none', scale=-1,
+                 patch_size=-1, repeat=1, store='RAM', extensions='png'):
         super().__init__()
         self.images = list()
         self.store = store.upper()
@@ -82,11 +83,16 @@ class ImageDataset(Dataset):
         self.scale = scale
         self.patch_size = patch_size
 
+        if type(extensions) != list:
+            extensions = [extensions]
+
         if type(root_dirs) != list:
             root_dirs = [root_dirs]
 
         for root_dir in root_dirs:
-            for file_path in glob.glob(os.path.join(root_dir, '*.png')):
+            for file_path in glob.glob(os.path.join(root_dir, '*.*')):
+                if file_path.split('.')[-1] not in extensions:
+                    continue
                 if self.store == 'RAM':
                     fptr = Image.open(file_path).convert('L')
                     file_copy = fptr.copy()
