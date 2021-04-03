@@ -30,7 +30,7 @@ if args.command == 'train':
 
     trainldr = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True)
     valldr = DataLoader(valset, batch_size=64, shuffle=False)
-    testldr = DataLoader(testset, batch_size=64, shuffle=False)
+    testldr = DataLoader(testset, batch_size=1, shuffle=False)
 
     net = model.DnCNN().move(device)
     optimizer = Adam(net.parameters(), lr=1e-4)
@@ -50,6 +50,6 @@ elif args.command == 'run':
     net.load_state_dict(torch.load(args.weights, map_location=device))
     recon = DnCNN.inference(net, noisy)
 
-    _, psnr = tools.compute_mse(np.array(image), np.array(recon), reformat=False)
+    _, psnr = tools.compute_mse(np.array(image), np.array(recon))
     print('PSNR: {:.3}dB'.format(psnr))
     tools.stackview([np.array(image) / 255., np.array(noisy) / 255., np.array(recon) / 255.])
