@@ -17,28 +17,31 @@ def ifft2d(x):
 def fft2d(x):
     return fft(fft(x, axis=0), axis=1)
 
-def image_reformat(img):
-    img = img * 255
-    img = np.clip(img, 0, 255)
-    img = img.astype(np.uint8)
+def image2uint8(img):
+    if img.dtype != np.uint8:
+        img = img * 255
+        img = np.clip(img, 0, 255)
+        img = img.astype(np.uint8)
     return img
 
 def stackview(imgs, width=20):
     h = imgs[0].shape[0]
     sep = np.zeros([h, width], dtype=np.uint8)
-    view = image_reformat(imgs[0])
+    view = image2uint8(imgs[0])
     for img in imgs[1:]:
-        view = np.concatenate([view, sep, image_reformat(img)], axis=1)
+        view = np.concatenate([view, sep, image2uint8(img)], axis=1)
     view = Image.fromarray(view, 'L')
     view.show()
 
-def compute_mse(x, y, reformat=True):
-    if reformat:
-        x = image_reformat(x)
-        y = image_reformat(y)
+def compute_mse(x, y):
+
+    if x.dtype == np.uint8:
+        scale = 255
+    else:
+        scale = 1
 
     mse = np.mean(np.power(x - y, 2))
-    psnr = 10 * np.log10(255**2 / mse)
+    psnr = 10 * np.log10(scale**2 / mse)
     return mse, psnr
 
 def get_gauss2d(h, w, sigma):
@@ -50,11 +53,12 @@ def get_gauss2d(h, w, sigma):
     gauss_2d = gauss_2d / gauss_2d.sum()
     return gauss_2d
 
-def compute_ssim(img1, img2, window_size=11, sigma=1.5, reformat=True):
+def compute_ssim(img1, img2, window_size=11, sigma=1.5):
 
-    if reformat:
-        img1 = image_reformat(img1)
-        img2 = image_reformat(img2)
+    if img1.dtype == np.uint8:
+        scale = 255
+    else:
+        scale = 1
 
     gauss_2d = get_gauss2d(window_size, window_size, sigma)
 
