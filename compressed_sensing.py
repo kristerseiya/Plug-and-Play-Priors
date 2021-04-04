@@ -95,7 +95,7 @@ print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
-tools.stackview([img, y, recon], width=20)
+tools.stackview([img, y, recon], width=20, method='Pillow')
 
 # save result
 if args.save != None:
