@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from scipy.signal import fftconvolve as convolve
 from scipy.fftpack import fft, ifft
+import matplotlib.pyplot as plt
 
 def idct2d(x):
     return idct(idct(x, axis=0, norm='ortho'), axis=1, norm='ortho')
@@ -24,14 +25,18 @@ def image2uint8(img):
         img = img.astype(np.uint8)
     return img
 
-def stackview(imgs, width=20):
+def stackview(imgs, width=20, method='matplotlib'):
     h = imgs[0].shape[0]
     sep = np.zeros([h, width], dtype=np.uint8)
     view = image2uint8(imgs[0])
     for img in imgs[1:]:
         view = np.concatenate([view, sep, image2uint8(img)], axis=1)
-    view = Image.fromarray(view, 'L')
-    view.show()
+    if method == 'Pillow':
+        view = Image.fromarray(view, 'L')
+        view.show()
+    elif method == 'matplotlib':
+        plt.imshow(view, cmap='gray')
+        plt.show()
 
 def compute_mse(x, y):
 
