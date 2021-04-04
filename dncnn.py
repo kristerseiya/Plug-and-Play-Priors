@@ -8,6 +8,7 @@ from PIL import Image
 
 import DnCNN
 import tools
+import prox
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--command', type=str, default='run')
@@ -41,15 +42,16 @@ if args.command == 'train':
 
 elif args.command == 'run':
 
-    image = Image.open(args.image).convert('L')
-    x = np.array(image)
-    x = x + np.random.normal(size=x.shape) * args.noise_lvl
-    x = np.clip(x, 0, 255)
-    noisy = Image.fromarray(x.astype(np.uint8), 'L')
-    net = DnCNN.DnCNN(act_mode='BR')
-    net.load_state_dict(torch.load(args.weights, map_location=device))
-    recon = DnCNN.inference(net, noisy)
+    img = Image.open(args.image).convert('L')
+    img = np.array(img) / 255.
+    noisy = img + np.random.normal(size=img.shape) * args.noise_lvl / 255.
 
-    _, psnr = tools.compute_mse(np.array(image), np.array(recon))
+    net = prox.DnCNN_Prior(args.weights, None)
+    recon = net(noisy)
+    # net = DnCNN.DnCNN(act_mode='BR')
+    # net.load_state_dict(torch.load(args.weights, map_location=device))
+    # recon = DnCNN.inference(net, noisy)
+
+    _, psnr = tools.compute_mse(tools.image2uint8(img), tools.image2uint8(recon))
     print('PSNR: {:.3}dB'.format(psnr))
-    tools.stackview([np.array(image) / 255., np.array(noisy) / 255., np.array(recon) / 255.])
+    tools.stackview([img, noisy, recon], method='Pillow')
