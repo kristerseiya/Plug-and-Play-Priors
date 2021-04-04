@@ -14,7 +14,7 @@ def train_single_epoch(model, optimizer, train_loader,
                        noise_lvl, clip=False, lossfn='L2',
                        scheduler=None):
 
-    dataset_size = len(train_loader.dataset)
+    n_data = 0
 
     if lossfn.upper() == 'L2':
         lossfn = F.mse_loss
@@ -38,18 +38,19 @@ def train_single_epoch(model, optimizer, train_loader,
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * images.size(0)
+        n_data += images.size(0)
         if scheduler != None:
             scheduler.step()
         pbar.update(1)
 
     tqdm.close(pbar)
 
-    return total_loss / float(dataset_size)
+    return total_loss / float(n_data)
 
 @torch.no_grad()
 def validate(model, test_loader, noise_lvl, clip=False, lossfn='L2'):
 
-    dataset_size = len(test_loader.dataset)
+    n_data = 0
 
     if lossfn.upper() == 'L2':
         lossfn = F.mse_loss
@@ -69,11 +70,12 @@ def validate(model, test_loader, noise_lvl, clip=False, lossfn='L2'):
             noisy = torch.clip(noisy, 0, 1)
         output = model(noisy)
         total_loss += lossfn(output, images).item() * images.size(0)
+        n_data += images.size(0)
         pbar.update(1)
 
     tqdm.close(pbar)
 
-    return total_loss / float(dataset_size)
+    return total_loss / float(n_data)
 
 
 def train(model, optimizer, max_epoch, train_loader, noise_lvl, clip=False, lossfn='L2',
