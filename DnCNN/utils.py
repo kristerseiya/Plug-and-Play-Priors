@@ -41,6 +41,8 @@ def merge_bn(model):
     merge all 'Conv+BN' (or 'TConv+BN') into 'Conv' (or 'TConv')
     based on https://github.com/pytorch/pytorch/pull/901
     '''
+    new_keys = list()
+    count = 0
     prev_m = None
     for k, m in list(model.named_children()):
         if (isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d)) and (isinstance(prev_m, nn.Conv2d) or isinstance(prev_m, nn.Linear) or isinstance(prev_m, nn.ConvTranspose2d)):
@@ -66,5 +68,10 @@ def merge_bn(model):
                 b.mul_(m.weight.data).add_(m.bias.data)
 
             del model._modules[k]
+        else:
+            new_keys.append(str(count))
+            count = count + 1
         prev_m = m
         merge_bn(m)
+    for nk, ok in zip(new_keys, list(model._modules.keys())):
+        model._modules[nk] = model._modules.pop(ok)
