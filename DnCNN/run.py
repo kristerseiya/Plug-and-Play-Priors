@@ -15,6 +15,7 @@ def train_single_epoch(model, optimizer, train_loader,
                        scheduler=None):
 
     n_data = 0
+    sigma = noise_lvl
 
     if lossfn.upper() == 'L2':
         lossfn = F.mse_loss
@@ -28,8 +29,12 @@ def train_single_epoch(model, optimizer, train_loader,
 
     for images in train_loader:
         optimizer.zero_grad()
+        batch_size = images.size(0)
         images = images.to(model.device)
-        noise = torch.randn_like(images) * noise_lvl / 255.
+        if type(noise_lvl) == list:
+            sigma = torch.rand(batch_size, 1, 1, 1, device=model.device)
+            sigma = sigma * (noise_lvl[1] - noise_lvl[0]) + noise_lvl[0]
+        noise = torch.randn_like(images) * sigma / 255.
         noisy = images + noise
         if clip:
             noisy = torch.clip(noisy, 0, 1)
@@ -37,8 +42,8 @@ def train_single_epoch(model, optimizer, train_loader,
         loss = lossfn(output, images)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item() * images.size(0)
-        n_data += images.size(0)
+        total_loss += loss.item() * batch_size
+        n_data += batch_size
         if scheduler != None:
             scheduler.step()
         pbar.update(1)
@@ -51,6 +56,7 @@ def train_single_epoch(model, optimizer, train_loader,
 def validate(model, test_loader, noise_lvl, clip=False, lossfn='L2'):
 
     n_data = 0
+    sigma = noise_lvl
 
     if lossfn.upper() == 'L2':
         lossfn = F.mse_loss
@@ -63,14 +69,18 @@ def validate(model, test_loader, noise_lvl, clip=False, lossfn='L2'):
     pbar = tqdm(total=len(test_loader), position=0, leave=False, file=sys.stdout)
 
     for images in test_loader:
+        batch_size = images.size(0)
         images = images.to(model.device)
-        noise = torch.randn_like(images) * noise_lvl / 255.
+        if type(noise_lvl) == list:
+            sigma = torch.rand(batch_size, 1, 1, 1, device=model.device)
+            sigma = sigma * (noise_lvl[1] - noise_lvl[0]) + noise_lvl[0]
+        noise = torch.randn_like(images) * sigma / 255.
         noisy = images + noise
         if clip:
             noisy = torch.clip(noisy, 0, 1)
         output = model(noisy)
-        total_loss += lossfn(output, images).item() * images.size(0)
-        n_data += images.size(0)
+        total_loss += lossfn(output, images).item() * batch_size
+        n_data += batch_size
         pbar.update(1)
 
     tqdm.close(pbar)
