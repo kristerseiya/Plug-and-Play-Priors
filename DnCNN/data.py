@@ -5,6 +5,8 @@ import glob
 from PIL import Image
 import os
 import numpy as np
+from tqdm import tqdm
+import sys
 
 
 def get_transform(mode):
@@ -89,19 +91,27 @@ class ImageDataset(Dataset):
         if type(root_dirs) != list:
             root_dirs = [root_dirs]
 
+        file_paths = list()
         for root_dir in root_dirs:
-            for file_path in glob.glob(os.path.join(root_dir, '*.*')):
-                if file_path.split('.')[-1] not in extensions:
-                    continue
-                if self.store == 'RAM':
-                    fptr = Image.open(file_path).convert('L')
-                    file_copy = fptr.copy()
-                    fptr.close()
-                    if scale > 0:
-                        file_copy = Rescale(scale)(file_copy)
-                    self.images.append(file_copy)
-                elif self.store == 'DISK':
-                    self.images.append(file_path)
+            for ext in extensions:
+                file_paths += glob.glob(os.path.join(root_dir, '*.'+ext))
+        n_files = len(file_paths)
+
+        if self.store == 'DISK':
+            self.images = file_paths
+        elif self.store == 'RAM':
+            pbar = tqdm(total=n_files, position=0, leave=False, file=sys.stdout)
+
+            for file_path in file_paths:
+                fptr = Image.open(file_path).convert('L')
+                file_copy = fptr.copy()
+                fptr.close()
+                if scale > 0:
+                    file_copy = Rescale(scale)(file_copy)
+                self.images.append(file_copy)
+                pbar.update(1)
+
+            tqdm.close(pbar)
 
         self.transform = get_transform(mode)
         if (self.patch_size > 0):
