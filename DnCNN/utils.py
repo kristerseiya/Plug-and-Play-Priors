@@ -28,6 +28,8 @@ def load_dncnn(model_path, device=None):
 
     net = model.DnCNN(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='R')  # use this if BN is not merged by utils_bnorm.merge_bn(model)
     net.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+    if not torch.cuda.is_available():
+        torch.set_flush_denormal(True)
     net.eval()
     for k, v in net.named_parameters():
         v.requires_grad = False
