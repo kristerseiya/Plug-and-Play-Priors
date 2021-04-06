@@ -4,13 +4,13 @@ Plug-and-Play is a way of making the optimization of image restoration problem e
 This is an attempted implementation of Plug-and-Play ADMM.
 
 ## Compressed Sensing
-![Alt text](result/tiger_dncnn.png?raw=true "Title")
+![Alt text](result/tiger_dncnn.png?raw=true "Compressed Sensing")
 
 ## Gaussian Deblurring
-![Alt text](result/gaussian_deblur_1515.PNG?raw=true "Title")
+![Alt text](result/gaussian_deblur_1515.PNG?raw=true "Gaussian Deblurring")
 
 ## Depixelation
-![Alt text](result/depixelize_result.PNG?raw=true "Title")
+![Alt text](result/depixelize_result.PNG?raw=true "Depixelation")
 
 # Installation
 
