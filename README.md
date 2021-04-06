@@ -12,9 +12,19 @@ This is an attempt of implementation of Plug-and-Play ADMM.
 pip install -r requirements.txt
 ```
 
-You can download DnCNN weights here
+You can download addtional DnCNN weights here
 
 [https://drive.google.com/drive/folders/13kfr3qny7S2xwG9h7v95F5mkWs0OmU0D](https://drive.google.com/drive/folders/13kfr3qny7S2xwG9h7v95F5mkWs0OmU0D)
+
+## Installing pybm3d
+
+To install pybm3d, first install Cython, then install manually by running setup.py
+```bash
+pip install Cython
+git clone --recursive https://github.com/ericmjonas/pybm3d.git
+cd pybm3d
+python setup.py install
+```
 
 # Usage
 
