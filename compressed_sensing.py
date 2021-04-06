@@ -15,14 +15,14 @@ import noise
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
 parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
-parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
+parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dncnn')
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
-parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dct')
-parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=100.)
+parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
+parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
-parser.add_argument('--relax', type=float, default=0.)
+parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
 args = parser.parse_args()
 
 # read image
@@ -103,7 +103,7 @@ if args.save != None:
         os.makedirs(args.save)
     image_name = args.image.split('/')[-1]
     image_name = image_name.split('.')[-2]
-    key = datetime.now().strftime('%Y%m%d%H%M%S')
+    key = datetime.now().strftime('%m%d%H%M%S')
     rate = str(args.sample).replace('.', '')
     original_name = image_name + '_orignal.png'
     compressed_name = image_name + '_compressed_' + rate + '_' + key + '.png'
