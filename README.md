@@ -26,6 +26,9 @@ cd pybm3d
 python setup.py install
 ```
 
+## Python Version
+Python 3.9 is used for this code but older version most likely works, too.
+
 # Usage
 
 You need 3 objects to run Plug-and-Play ADMM.
