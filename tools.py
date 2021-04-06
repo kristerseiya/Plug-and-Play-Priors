@@ -84,9 +84,13 @@ def compute_ssim(img1, img2, window_size=11, sigma=1.5):
 
 def transposed_correlate(x, window):
     M, N = window.shape
+    assert(M % 2 == 1)
+    assert(M % 2 == 1)
+    mc = M // 2
+    nc = N // 2
     x_M, x_N = x.shape
-    result = np.zeros((x.shape[0]+M-1, x.shape[1]+N-1))
+    result = np.zeros((x.shape[0], x.shape[1]))
     for m in range(M):
         for n in range(N):
-            result[m:m+x_M, n:n+x_N] += window[m, n] * x
+            result += np.roll(x, (m-mc, n-nc), axis=(0, 1)) * window[m, n]
     return result
