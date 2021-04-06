@@ -6,6 +6,9 @@ This is an attempt of implementation of Plug-and-Play ADMM.
 ## Compressed Sensing
 ![Alt text](result/tiger_dncnn.png?raw=true "Title")
 
+## Gaussian Deblurring
+![Alt text](result/gaussian_deblur_1515.PNG?raw=true "Title")
+
 # Installation
 
 ```bash
