@@ -1,7 +1,7 @@
 # What is Plug-and-Play Priors?
-Plug-and-Play is a way of making optimization of image restoration problem in computational imaging easier by allowing you to flexibly change forward model and image prior.
+Plug-and-Play is a way of making the optimization of image restoration problem easier by decoupling the data fidelity term (forward model) and regularization term (image prior), thus allows you to plug in arbitrary gaussian denoisers for different image restoration tasks.
 
-This is an attempt of implementation of Plug-and-Play ADMM.
+This is an attempted implementation of Plug-and-Play ADMM.
 
 ## Compressed Sensing
 ![Alt text](result/tiger_dncnn.png?raw=true "Title")
