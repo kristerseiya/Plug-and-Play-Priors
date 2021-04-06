@@ -9,6 +9,9 @@ This is an attempt of implementation of Plug-and-Play ADMM.
 ## Gaussian Deblurring
 ![Alt text](result/gaussian_deblur_1515.PNG?raw=true "Title")
 
+## Depixlation
+![Alt text](result/depixelize_result.PNG?raw=true "Title")
+
 # Installation
 
 ```bash
