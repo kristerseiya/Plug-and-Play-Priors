@@ -19,10 +19,6 @@ parser.add_argument('--size', help='pixel size', type=int, default=15)
 parser.add_argument('--weights', type=str, default=None)
 args = parser.parse_args()
 
-# read image
-img = Image.open(args.image).convert('L')
-img = np.array(img) / 255.
-
 def pixelate(x, size):
     M, N = x.shape
     output_shape = (int(np.ceil(M / size)), int(np.ceil(N / size)))
@@ -74,6 +70,9 @@ class MSE_AverageSampling:
         output = x - output
         return output
 
+# read image
+img = Image.open(args.image).convert('L')
+img = np.array(img) / 255.
 
 y = pixelate(img, args.size)
 forward = MSE_AverageSampling(y, args.size, args.alpha, img.shape)
