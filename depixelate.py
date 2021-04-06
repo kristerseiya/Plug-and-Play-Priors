@@ -13,10 +13,9 @@ import noise
 # command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
-parser.add_argument('--sigma', help='sample rate', type=float, default=1.5)
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
-parser.add_argument('--alpha', help='lagrange multiplier', type=float, default=1000)
-parser.add_argument('--window', help='lagrange multiplier', type=int, default=15)
+parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=1000)
+parser.add_argument('--size', help='pixel size', type=int, default=15)
 parser.add_argument('--weights', type=str, default=None)
 args = parser.parse_args()
 
@@ -24,7 +23,7 @@ args = parser.parse_args()
 img = Image.open(args.image).convert('L')
 img = np.array(img) / 255.
 
-def average_sampling(x, size):
+def pixelate(x, size):
     M, N = x.shape
     output_shape = (int(np.ceil(M / size)), int(np.ceil(N / size)))
     output = np.zeros(output_shape)
@@ -76,8 +75,8 @@ class MSE_AverageSampling:
         return output
 
 
-y = average_sampling(img, args.window)
-forward = MSE_AverageSampling(y, args.window, args.alpha, img.shape)
+y = pixelate(img, args.size)
+forward = MSE_AverageSampling(y, args.size, args.alpha, img.shape)
 prior = prox.DnCNN_Prior(args.weights, input_shape=img.shape)
 
 # optimize
@@ -92,7 +91,7 @@ print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
 
 M, N = img.shape
-size = args.window
+size = args.size
 y_big = np.zeros_like(img)
 for i, m in enumerate(range(0, M, size)):
     for j, n in enumerate(range(0, N, size)):
