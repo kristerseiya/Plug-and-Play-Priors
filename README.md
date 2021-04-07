@@ -47,23 +47,21 @@ Variable transformation is a transformation between variables x and v where x is
 You can write your own forward model class and image prior class, but it must have the following attributes and methods
 ```python
 class your_forward_or_prior_model:
-  def __init__(self, input_shape):
-    self.input_shape = input_shape
-    # this variable stores the shape of accepted variable.
-    # this is used to initialize some variables inside the optimization algorithm.
+  def __init__(self):
+    # initialization if needed
 
   def __call__(self, x):
     # this method computes the proximal operator at a given value x
-    # for an image prior, output is the estimate of Gaussian-denoised image
+    # for an image prior, output is simply a
+    # Gaussian-denoised image
 ```
 For consistency, images are normalized by dividing the pixels by 255 !!
 
 ## Examples
 ```python
 class my_forward_model:
-    def __init__(self, y, input_shape):
+    def __init__(self, y):
       self.y = y # measurement
-      self.input_shape = input_shape
       # do other stuff
 
     def __call__(self, x):
@@ -73,9 +71,8 @@ class my_forward_model:
 
 ```python
 class my_image_prior:
-    def __init__(self, input_shape):
-      self.input_shape = input_shape
-      # do other stuff
+    def __init__(self):
+      # initialization if needed
 
     def __call__(self, x):
       # compute value of proximal operator at x
@@ -98,10 +95,11 @@ class my_transform:
 
 ```python
 y = get_y() # your measurement
-f = my_forward_model(y, x_shape)
-g = my_image_prior(v_shape)
+f = my_forward_model(y)
+g = my_image_prior()
 t = my_transform()
 optimizer = PnP_ADMM(f, g, transform=t)
+optimizer.init(np.zeros_like(y))
 x_hat, v_hat = optimizer.run(iter=100, return='both')
 ```
 
@@ -118,11 +116,15 @@ class PnP_ADMM:
       #  (do not explicitly define variable transformation unless
       #   the transformation is invertible or one-to-one mapping!)
 
-    def run(self, iter=100, verbose=True, return_value='both'):
+    def init(self, v):
+      # v: initial variable
+
+    def run(self, iter=100, relax=0, return_value='both', verbose=True):
       # runs optimization
       # iter: iteration
-      # verbose: if true, prints iteration number
+      # relax: relaxation constant (range from 0 to 1, 0 if no relaxation)
       # return_value: if 'both', this will return both x and v,
       #               if 'x', this will only return x
       #               if else, this will only return v                
+      # verbose: if true, prints iteration number
 ```
