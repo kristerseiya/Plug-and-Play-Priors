@@ -16,9 +16,12 @@ class PnP_ADMM:
         self.prior = image_prior
         self.transform = transform if transform != None else IdentityTransform()
 
-    def init(self, v):
+    def init(self, v, u=None):
         self.v_init = copy.deepcopy(v)
-        self.u_init = copy.deepcopy(v)
+        if u == None:
+            self.u_init = copy.deepcopy(v)
+        else:
+            self.u_init = copy.deepcopy(u)
 
     def run(self, iter=100, relax=0., return_value='both', verbose=True):
 
