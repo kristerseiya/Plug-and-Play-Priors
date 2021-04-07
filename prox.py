@@ -14,7 +14,7 @@ import tools
 
 # lambd * ||x||_1
 class L1Norm:
-    def __init__(self, lambd, input_shape):
+    def __init__(self, lambd, input_shape=None):
         self.lambd = lambd
         self.input_shape = input_shape
 
@@ -22,7 +22,7 @@ class L1Norm:
         return np.maximum(np.abs(x) - self.lambd, 0) * np.sign(x)
 
 class TVNorm:
-    def __init__(self, lambd, input_shape):
+    def __init__(self, lambd, input_shape=None):
         self.lambd = lambd
         self.input_shape = input_shape
 
@@ -30,7 +30,7 @@ class TVNorm:
         return prx_tv(x, self.lambd)
 
 class DnCNN_Prior:
-    def __init__(self, model_path, input_shape, device=None):
+    def __init__(self, model_path, input_shape=None, device=None, use_tensor=False):
 
         if device == None:
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -51,7 +51,7 @@ class DnCNN_Prior:
         return y
 
 class BM3D_Prior:
-    def __init__(self, lambd, input_shape):
+    def __init__(self, lambd, input_shape=None):
         self.std = np.sqrt(lambd / 2)
         self.input_shape = input_shape
 
@@ -60,7 +60,7 @@ class BM3D_Prior:
 
 # 1/2*alpha*|| y - x ||_2^2
 class MSE:
-    def __init__(self, y, input_shape, alpha=1.):
+    def __init__(self, y, input_shape=None, alpha=1.):
         self.y = y
         self.input_shape = input_shape
         self.alpha = alpha
@@ -70,7 +70,7 @@ class MSE:
 
 # 1/2*alpha*|| y - Ax ||_2^2
 class MSE2:
-    def __init__(self, A, y, input_shape, alpha=1.):
+    def __init__(self, A, y, input_shape=None, alpha=1.):
         self.y = y
         self.Aty = A.T @ y
         self.AtA = A.T @ A
@@ -83,7 +83,7 @@ class MSE2:
 
 # mse for compressed sensing
 class MSEwithMask:
-    def __init__(self, y, mask, input_shape, alpha=1.):
+    def __init__(self, y, mask, input_shape=None, alpha=1.):
         self.y = y.copy()
         self.y[~mask] = 0.
         self.mask = mask
