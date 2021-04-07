@@ -37,12 +37,12 @@ Python 3.9 is used for this code but older version most likely works, too.
 
 # Usage
 
-You need 3 objects to run Plug-and-Play ADMM.
+We use 3 class objects to run Plug-and-Play ADMM.
 - forward model
 - image prior
-- variable transformation
+- variable transformation [optional]
 
-Variable transformation is a transformation between variables x and v where x is the input argument of forward model and v is the input argument of the prior model. The optimization will run the augmented Lagrangian of constrained optimization, transform(x) = v.
+Variable transformation is a transformation between variables x and v where x is the input argument of forward model and v is the input argument of the prior model. The optimization will run the augmented Lagrangian of constrained optimization, transform(x) = v. If not explicitly given, it will assume x = v. (do not explicitly define variable transformation unless the transformation is invertible or one-to-one mapping!)
 
 You can write your own forward model class and image prior class, but it must have the following attributes and methods
 ```python
@@ -114,6 +114,8 @@ class PnP_ADMM:
       # image_prior: image_prior object with set(), prox() methods
       # transform: transformation between x and v
       #            if not given, it will assume x = v
+      #
+      #  (do not explicitly define variable transformation unless the transformation is invertible or one-to-one mapping!)
 
     def run(self, iter=100, verbose=True, return_value='both'):
       # runs optimization
