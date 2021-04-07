@@ -115,7 +115,8 @@ class PnP_ADMM:
       # transform: transformation between x and v
       #            if not given, it will assume x = v
       #
-      #  (do not explicitly define variable transformation unless the transformation is invertible or one-to-one mapping!)
+      #  (do not explicitly define variable transformation unless
+      #   the transformation is invertible or one-to-one mapping!)
 
     def run(self, iter=100, verbose=True, return_value='both'):
       # runs optimization
