@@ -116,8 +116,12 @@ class PnP_ADMM:
       #  (do not explicitly define variable transformation unless
       #   the transformation is invertible or one-to-one mapping!)
 
-    def init(self, v):
-      # v: initial variable
+    def init(self, v, u=None):
+      # v: initial input of image_prior
+      # u: initial value for variable u
+      #    if not provided, use the same value as v
+      #
+      # using zero values is recommended
 
     def run(self, iter=100, relax=0, return_value='both', verbose=True):
       # runs optimization
