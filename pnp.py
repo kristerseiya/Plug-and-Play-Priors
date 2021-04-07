@@ -1,5 +1,6 @@
 
 import numpy as np
+import copy
 
 
 class IdentityTransform:
@@ -15,10 +16,19 @@ class PnP_ADMM:
         self.prior = image_prior
         self.transform = transform if transform != None else IdentityTransform()
 
+    def init(self, v, u=None):
+        self.v_init = copy.deepcopy(v)
+        if u == None:
+            self.u_init = copy.deepcopy(v)
+        else:
+            self.u_init = copy.deepcopy(u)
+
     def run(self, iter=100, relax=0., return_value='both', verbose=True):
 
-        v = np.zeros(self.prior.input_shape)
-        u = np.zeros(self.prior.input_shape)
+        # v = np.zeros(self.prior.input_shape)
+        # u = np.zeros(self.prior.input_shape)
+        v = self.v_init
+        u = self.u_init
 
         for i in range(iter):
 

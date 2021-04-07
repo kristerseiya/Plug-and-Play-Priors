@@ -46,11 +46,8 @@ elif args.command == 'run':
     img = np.array(img) / 255.
     noisy = img + np.random.normal(size=img.shape) * args.noise_lvl / 255.
 
-    net = prox.DnCNN_Prior(args.weights, None)
+    net = prox.DnCNN_Prior(args.weights)
     recon = net(noisy)
-    # net = DnCNN.DnCNN(act_mode='BR')
-    # net.load_state_dict(torch.load(args.weights, map_location=device))
-    # recon = DnCNN.inference(net, noisy)
 
     _, psnr = tools.compute_mse(tools.image2uint8(img), tools.image2uint8(recon))
     print('PSNR: {:.3}dB'.format(psnr))

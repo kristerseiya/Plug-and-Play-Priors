@@ -86,7 +86,7 @@ forward = MSE_AverageSampling(y, args.size, args.alpha, img.shape)
 if args.prior == 'dct':
 
     # prior
-    sparse_prior = prox.L1Norm(args.lambd, input_shape=img.shape)
+    sparse_prior = prox.L1Norm(args.lambd)
 
     # define transformation from x to v
     class DCT_Transform:
@@ -99,28 +99,31 @@ if args.prior == 'dct':
     # optimize
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(forward, sparse_prior, transform=dct_transform)
+    optimizer.init(np.zeros(img.shape))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn_prior = prox.DnCNN_Prior(args.weights, input_shape=img.shape)
+    dncnn_prior = prox.DnCNN_Prior(args.weights)
     optimizer = pnp.PnP_ADMM(forward, dncnn_prior)
+    optimizer.init(np.zeros(img.shape))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # total variation norm
 elif args.prior == 'tv':
 
-    tv_prior = prox.TVNorm(args.lambd, input_shape=img.shape)
+    tv_prior = prox.TVNorm(args.lambd)
     optimizer = pnp.PnP_ADMM(forward, tv_prior)
+    optimizer.init(np.zeros(img.shape))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
 
-    bm3d_prior = prox.BM3D_Prior(args.lambd, input_shape=img.shape)
-
+    bm3d_prior = prox.BM3D_Prior(args.lambd)
     optimizer = pnp.PnP_ADMM(forward, bm3d_prior)
+    optimizer.init(np.zeros(img.shape))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 
