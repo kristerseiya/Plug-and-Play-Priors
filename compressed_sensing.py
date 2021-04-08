@@ -100,10 +100,12 @@ recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon)
-ssim = tools.compute_ssim(img, recon)
+ssim = tools.ssim(img, recon).mean()
+msssim = tools.msssim(img, recon).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
+print('MS-SSIM: {:.5f}'.format(msssim))
 
 # viewer
 tools.stackview([img, y, recon], width=20, method='Pillow')
