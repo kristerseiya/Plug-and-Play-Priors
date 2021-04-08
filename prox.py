@@ -14,23 +14,22 @@ import tools
 
 # lambd * ||x||_1
 class L1Norm:
-    def __init__(self, lambd, input_shape=None):
+    def __init__(self, lambd):
         self.lambd = lambd
-        self.input_shape = input_shape
 
     def __call__(self, x):
         return np.maximum(np.abs(x) - self.lambd, 0) * np.sign(x)
 
 class TVNorm:
-    def __init__(self, lambd, input_shape=None):
+    def __init__(self, lambd):
         self.lambd = lambd
-        self.input_shape = input_shape
 
     def __call__(self, x):
         return prx_tv(x, self.lambd)
 
 class DnCNN_Prior:
-    def __init__(self, model_path, use_tensor=False, input_shape=None, device=None):
+    def __init__(self, model_path, use_tensor=False,
+                 patch_size=-1, device=None):
 
         if device == None:
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -38,14 +37,17 @@ class DnCNN_Prior:
             self.device = device
 
         self.net = load_dncnn(model_path, device=device)
-        self.input_shape = input_shape
+        self.patch_size = patch_size
         self.use_tensor = use_tensor
 
     def __call__(self, x):
         if not self.use_tensor:
             x = torch.tensor(x, dtype=torch.float32,
                              requires_grad=False, device=self.device)
-            x = x.view(1, 1, *x.size())
+            if self.patch_size > 0:
+                x = x.view(batch_size, 1, self.patch_size, self.patch_size)
+            else:
+                x = x.view(1, 1, *x.size())
             y = self.net(x)
             y = y.cpu().squeeze(0).squeeze(0)
             y = y.numpy()
@@ -53,18 +55,16 @@ class DnCNN_Prior:
         return self.net(x)
 
 class BM3D_Prior:
-    def __init__(self, lambd, input_shape=None):
+    def __init__(self, lambd):
         self.std = np.sqrt(lambd / 2)
-        self.input_shape = input_shape
 
     def __call__(self, x):
         return pybm3d.bm3d.bm3d(x, self.std)
 
 # 1/2*alpha*|| y - x ||_2^2
 class MSE:
-    def __init__(self, y, alpha=1., input_shape=None):
+    def __init__(self, y, alpha=1.):
         self.y = y
-        self.input_shape = input_shape
         self.alpha = alpha
 
     def __call__(self, x):
@@ -72,11 +72,10 @@ class MSE:
 
 # 1/2*alpha*|| y - Ax ||_2^2
 class MSE2:
-    def __init__(self, A, y, alpha=1., input_shape=None):
+    def __init__(self, A, y, alpha=1.):
         self.y = y
         self.Aty = A.T @ y
         self.AtA = A.T @ A
-        self.input_shape = input_shape
         I = np.eye(self.AtA.shape[0])
         self.aAtA_inv = la.inv(I + self.alpha * self.AtA)
 
@@ -85,11 +84,10 @@ class MSE2:
 
 # mse for compressed sensing
 class MSEwithMask:
-    def __init__(self, y, mask, alpha=1., input_shape=None):
+    def __init__(self, y, mask, alpha=1.):
         self.y = y.copy()
         self.y[~mask] = 0.
         self.mask = mask
-        self.input_shape = input_shape
         self.alpha = alpha
         self.a = np.ones(self.mask.shape)
         self.a[self.mask] = 1. / (1 + alpha)
@@ -98,11 +96,10 @@ class MSEwithMask:
         return self.a * (self.alpha * self.y + x)
 
 class MSEwithMaskTensor:
-    def __init__(self, y, mask, alpha=1., input_shape=None):
+    def __init__(self, y, mask, alpha=1.):
         self.y = y.clone()
         self.y[~mask] = 0.
         self.mask = mask
-        self.input_shape = input_shape
         self.alpha = alpha
         self.a = torch.ones_like(self.mask).type(torch.float32)
         self.a[self.mask] = 1. / (1 + alpha)
