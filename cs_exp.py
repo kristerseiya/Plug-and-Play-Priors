@@ -108,7 +108,7 @@ for i in range(args.trials):
 
 print('MSE: {:.5f}'.format(mse_result.mean()))
 print('SSIM: {:.5f}'.format(ssim_result.mean()))
-print('MS-SSIM: {:.5f}'.format(msssim.mean()))
+print('MS-SSIM: {:.5f}'.format(msssim_result.mean()))
 
 
 # # viewer
