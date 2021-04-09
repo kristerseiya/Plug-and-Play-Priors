@@ -73,10 +73,6 @@ elif args.prior == 'dncnn':
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
     mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
-    # def stop_condition(x, v, t):
-    #     error = torch.pow(x - v, 2).mean().item()
-    #     print(error)
-    #     return False
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
     optimizer.init(torch.rand_like(y_t), torch.zeros_like(y_t))
     recon_t = optimizer.run(iter=args.iter,
