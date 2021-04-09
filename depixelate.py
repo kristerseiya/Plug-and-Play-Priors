@@ -38,48 +38,12 @@ def pixelate(x, size):
             output[i, j] = (x[m:m+step_m, n:n+step_n]).mean()
     return output
 
-class MSE_AverageSampling:
-    def __init__(self, y, size, alpha, input_shape):
-        self.size = size
-        self.alpha = alpha
-        self.input_shape = input_shape
-        self.size = size
-        self.aAty = np.zeros(input_shape)
-        M, N = self.input_shape
-        for i, m in enumerate(range(0, M, size)):
-            for j, n in enumerate(range(0, N, size)):
-                step_m = size
-                step_n = size
-                if M - m < size:
-                    step_m = M - m
-                if N - n < size:
-                    step_n = N - n
-                self.aAty[m:m+step_m, n:n+step_n] = y[i, j] / (step_m * step_n)
-        self.aAty = self.aAty * self.alpha
-
-    def __call__(self, x):
-        x = x + self.aAty
-        output = np.zeros_like(x)
-        M, N = self.input_shape
-        for m in range(0, M, self.size):
-            for n in range(0, N, self.size):
-                step_m = self.size
-                step_n = self.size
-                if M - m < self.size:
-                    step_m = M - m
-                if N - n < self.size:
-                    step_n = N - n
-                scale = self.alpha / ((step_m * step_n))
-                output[m:m+step_m, n:n+step_n] = (x[m:m+step_m, n:n+step_n]).mean() * (scale / (1 + scale))
-        output = x - output
-        return output
-
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img) / 255.
+img = np.array(img)
 
-y = pixelate(img, args.size)
-forward = MSE_AverageSampling(y, args.size, args.alpha, img.shape)
+y = pixelate(img / 255., args.size)
+forward = prox.AverageDownsampleMSE(y, args.size, args.alpha, img.shape)
 
 
 # use sparsity in DCT domain as a prior
@@ -126,6 +90,8 @@ elif args.prior == 'bm3d':
     optimizer.init(np.zeros(img.shape))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
+
+recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon)

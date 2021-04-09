@@ -24,24 +24,25 @@ parser.add_argument('--lambd', help='coeefficient of prior', type=float, default
 parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
 parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
+parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img) / 255.
+img = np.array(img)
 
 # do random sampling from the image
 k = int(img.size * args.sample)
 ri = np.random.choice(img.size, k, replace=False)
 mask = np.ones(img.shape, dtype=bool) * False
 mask.T.flat[ri] = True
-y = img.copy()
+y = img.copy() / 255.
 if args.noise != 0:
-    y = noise.add_gauss(y, std=args.noise)
+    y = noise.add_gauss(y, std=args.noise / 255.)
 y[~mask] = 0.
 
 # forward model
-mseloss = prox.MSEwithMask(y, mask, alpha=args.alpha)
+mseloss = prox.MaskMSE(y, mask, alpha=args.alpha)
 
 # use sparsity in DCT domain as a prior
 if args.prior == 'dct':
@@ -60,8 +61,8 @@ if args.prior == 'dct':
     # optimize
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
-    optimizer.init(np.zeros_like(img))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
@@ -71,10 +72,13 @@ elif args.prior == 'dncnn':
     y_t = y_t.view(1, 1, *y_t.size())
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
-    mseloss = prox.MSEwithMaskTensor(y_t, mask_t, args.alpha)
+    mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
-    optimizer.init(torch.zeros_like(y_t))
-    recon_t = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    optimizer.init(torch.rand_like(y_t), torch.zeros_like(y_t))
+    recon_t = optimizer.run(iter=args.iter,
+                            relax=args.relax,
+                            return_value='x',
+                            verbose=args.verbose)
     recon = recon_t.cpu().numpy().squeeze(0).squeeze(0)
 
 # total variation norm
@@ -82,8 +86,8 @@ elif args.prior == 'tv':
 
     tv_prior = prox.TVNorm(args.lambd)
     optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
-    optimizer.init(np.zeros_like(img))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
@@ -91,17 +95,17 @@ elif args.prior == 'bm3d':
     bm3d_prior = prox.BM3D_Prior(args.lambd)
 
     optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
-    optimizer.init(np.zeros_like(img))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 
-img = tools.image2uint8(img)
+# img = tools.image2uint8(img)
 recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon)
-ssim = tools.ssim(img, recon).mean()
-msssim = tools.msssim(img, recon).mean()
+mse, psnr = tools.compute_mse(img, recon, scale=255)
+ssim = tools.ssim(img, recon, scale=255).mean()
+msssim = tools.msssim(img, recon, scale=255).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
