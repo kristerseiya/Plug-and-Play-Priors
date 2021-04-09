@@ -1,12 +1,16 @@
 
 import numpy as np
 import numpy.linalg as la
-from prox_tv import tv1_2d as prx_tv
 import torch
 import torch.nn.functional as F
 from scipy.signal import correlate2d
 from scipy.signal import fftconvolve
-import pybm3d
+
+try:
+    from prox_tv import tv1_2d as prx_tv
+    import pybm3d
+except:
+    pass
 
 from DnCNN.utils import load_dncnn
 import tools
