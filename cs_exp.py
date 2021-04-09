@@ -42,11 +42,11 @@ for i in range(args.trials):
     mask.T.flat[ri] = True
     y = img.copy() / 255.
     if args.noise != 0:
-        y = noise.add_gauss(y, std=args.noise)
+        y = noise.add_gauss(y, std=args.noise / 255.)
     y[~mask] = 0.
 
     # forward model
-    mseloss = prox.MSEwithMask(y, mask, alpha=args.alpha)
+    mseloss = prox.MaskMSE(y, mask, alpha=args.alpha)
 
     # use sparsity in DCT domain as a prior
     if args.prior == 'dct':
@@ -65,7 +65,7 @@ for i in range(args.trials):
         # optimize
         dct_transform = DCT_Transform()
         optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
-        optimizer.init(np.zeros_like(img))
+        optimizer.init(np.zeros(img.shape, dtype=np.float64))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
     # use trained prior from DnCNN
@@ -76,7 +76,7 @@ for i in range(args.trials):
         y_t = y_t.view(1, 1, *y_t.size())
         mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
         mask_t = mask_t.view(1, 1, *mask_t.size())
-        mseloss = prox.MSEwithMaskTensor(y_t, mask_t, args.alpha)
+        mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
         optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
         optimizer.init(torch.zeros_like(y_t))
         recon_t = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
@@ -87,7 +87,7 @@ for i in range(args.trials):
 
         tv_prior = prox.TVNorm(args.lambd)
         optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
-        optimizer.init(np.zeros_like(img))
+        optimizer.init(np.zeros_like(y))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
     # block matching with 3D filter
@@ -96,15 +96,15 @@ for i in range(args.trials):
         bm3d_prior = prox.BM3D_Prior(args.lambd)
 
         optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
-        optimizer.init(np.zeros_like(img))
+        optimizer.init(np.zeros_like(y))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
     recon = tools.image2uint8(recon)
 
     # reconstruction quality assessment
-    mse_result[i] = tools.compute_mse(img, recon)[0]
-    ssim_result[i] = tools.ssim(img, recon).mean()
-    msssim_result[i] = tools.msssim(img, recon).mean()
+    mse_result[i] = tools.compute_mse(img, recon, scale=255)[0]
+    ssim_result[i] = tools.ssim(img, recon, scale=255).mean()
+    msssim_result[i] = tools.msssim(img, recon, scale=255).mean()
 
 print('MSE: {:.5f}'.format(mse_result.mean()))
 print('SSIM: {:.5f}'.format(ssim_result.mean()))

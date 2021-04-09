@@ -24,34 +24,14 @@ parser.add_argument('--save', help='a directory to save result', type=str, defau
 parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
 args = parser.parse_args()
 
-# mse for deblurring
-class MSEwithCorrelation:
-    def __init__(self, y, window, input_shape, alpha=1.):
-        self.Hty = tools.transposed_correlate(y, window)
-        self.window = window
-        autocorr = correlate2d(window, window, mode='full')
-        self.input_shape = input_shape
-        shift = (window.shape[0]-1, window.shape[1]-1)
-        autocorr = np.pad(autocorr, ((0, input_shape[0]-autocorr.shape[0]), (0, input_shape[1]-autocorr.shape[1])), 'constant', constant_values=((0, 0), (0, 0)))
-        self.autocorr = alpha * np.roll(autocorr, (-shift[0], -shift[1]), axis=(0, 1))
-        self.alpha = alpha
-        self.autocorr[0, 0] += 1
-        self.inv_window = tools.fft2d(self.autocorr)
-
-    def __call__(self, x):
-        tmp = self.alpha * self.Hty + x
-        tmp = tools.fft2d(tmp)
-        result = np.real(tools.ifft2d(tmp / self.inv_window))
-        return result
-
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img) / 255.
+img = np.array(img)
 gauss_window = tools.get_gauss2d(args.window, args.window, args.sigma)
-y = correlate2d(img, gauss_window, mode='same', boundary='wrap')
+y = correlate2d(img / 255., gauss_window, mode='same', boundary='wrap')
 
 # forward model
-forward = MSEwithCorrelation(y, gauss_window, input_shape=img.shape, alpha=args.alpha)
+forward = prox.CirculantMSE(y, gauss_window, input_shape=img.shape, alpha=args.alpha)
 
 # use sparsity in DCT domain as a prior
 if args.prior == 'dct':
@@ -98,9 +78,11 @@ elif args.prior == 'bm3d':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
 
+recon = tools.image2uint8(recon)
+
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon)
-ssim = tools.compute_ssim(img, recon)
+mse, psnr = tools.compute_mse(img, recon, scale=255)
+ssim = tools.ssim(img, recon, scale=255)
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
