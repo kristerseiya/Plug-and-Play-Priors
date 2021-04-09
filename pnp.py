@@ -23,7 +23,7 @@ class PnP_ADMM:
         else:
             self.u_init = copy.deepcopy(u)
 
-    def run(self, iter=100, relax=0., return_value='both', verbose=False):
+    def run(self, iter=100, relax=0., return_value='both', verbose=False, stop_condition=None):
 
         v = self.v_init
         u = self.u_init
@@ -40,6 +40,10 @@ class PnP_ADMM:
 
             diff = x_relaxed - v
             u = u + diff
+
+            if stop_condition != None:
+                if stop_condition(x, v, transform):
+                    break
 
         if return_value == 'both':
             return x, v
