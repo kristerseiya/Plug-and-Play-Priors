@@ -99,7 +99,7 @@ f = my_forward_model(y)
 g = my_image_prior()
 t = my_transform()
 optimizer = PnP_ADMM(f, g, transform=t)
-optimizer.init(np.zeros_like(y))
+optimizer.init(np.random.rand(*y.shape))
 x_hat, v_hat = optimizer.run(iter=100, return='both')
 ```
 
