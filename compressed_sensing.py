@@ -73,9 +73,17 @@ elif args.prior == 'dncnn':
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
     mseloss = prox.MSEwithMaskTensor(y_t, mask_t, args.alpha)
+    def stop_condition(x, v, t):
+        error = torch.pow(x - v, 2).mean().item()
+        print(error)
+        return False
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
     optimizer.init(torch.zeros_like(y_t))
-    recon_t = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
+    recon_t = optimizer.run(iter=args.iter,
+                            relax=args.relax,
+                            return_value='x',
+                            verbose=args.verbose,
+                            stop_condition=stop_condition)
     recon = recon_t.cpu().numpy().squeeze(0).squeeze(0)
 
 # total variation norm
