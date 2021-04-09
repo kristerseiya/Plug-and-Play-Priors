@@ -104,7 +104,7 @@ def fspecial_gauss(size, sigma):
     g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
     return g/g.sum()
 
-def ssim(img1, img2, cs_map=False):
+def ssim(img1, img2, scale=None, cs_map=False):
     """Return the Structural Similarity Map corresponding to input images img1
     and img2 (images are assumed to be uint8)
 
@@ -119,7 +119,14 @@ def ssim(img1, img2, cs_map=False):
     window = fspecial_gauss(size, sigma)
     K1 = 0.01
     K2 = 0.03
-    L = 255 #bitdepth of image
+    if scale == None:
+        if img1.dtype == np.uint8:
+            L = 255
+        else:
+            L = 1
+    else:
+        L = scale
+    # L = 255 #bitdepth of image
     C1 = (K1*L)**2
     C2 = (K2*L)**2
     mu1 = convolve(window, img1, mode='valid')
@@ -138,7 +145,7 @@ def ssim(img1, img2, cs_map=False):
         return ((2*mu1_mu2 + C1)*(2*sigma12 + C2))/((mu1_sq + mu2_sq + C1)*
                     (sigma1_sq + sigma2_sq + C2))
 
-def msssim(img1, img2):
+def msssim(img1, img2, scale=None):
     """This function implements Multi-Scale Structural Similarity (MSSSIM) Image
     Quality Assessment according to Z. Wang's "Multi-scale structural similarity
     for image quality assessment" Invited Paper, IEEE Asilomar Conference on
@@ -147,6 +154,13 @@ def msssim(img1, img2):
     Author's MATLAB implementation:-
     http://www.cns.nyu.edu/~lcv/ssim/msssim.zip
     """
+    if scale == None:
+        if img1.dtype == np.uint8:
+            L = 255
+        else:
+            L = 1
+    else:
+        L = scale
     level = 5
     weight = np.array([0.0448, 0.2856, 0.3001, 0.2363, 0.1333])
     downsample_filter = np.ones((2, 2))/4.0
@@ -155,7 +169,7 @@ def msssim(img1, img2):
     mssim = np.array([])
     mcs = np.array([])
     for l in range(level):
-        ssim_map, cs_map = ssim(im1, im2, cs_map=True)
+        ssim_map, cs_map = ssim(im1, im2, scale=L, cs_map=True)
         mssim = np.append(mssim, ssim_map.mean())
         mcs = np.append(mcs, cs_map.mean())
         filtered_im1 = ndimage.filters.convolve(im1, downsample_filter,
