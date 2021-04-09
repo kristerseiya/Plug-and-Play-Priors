@@ -121,9 +121,10 @@ class PnP_ADMM:
       # u: initial value for variable u
       #    if not provided, use the same value as v
       #
-      # using zero values is recommended
+      # using random values (range from 0 to 1) 
+      # or constant array of 0.5 is recommended.
 
-    def run(self, iter=100, relax=0, return_value='both', verbose=True):
+    def run(self, iter=100, relax=0, return_value='both', verbose=False):
       # runs optimization
       # iter: iteration
       # relax: relaxation constant (range from 0 to 1, 0 if no relaxation)
