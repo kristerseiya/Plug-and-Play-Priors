@@ -83,7 +83,7 @@ class MSE2:
         return self.aAtA_inv @ (self.alpha * self.Aty + x)
 
 # mse for compressed sensing
-class MSEwithMask:
+class MaskMSE:
     def __init__(self, y, mask, alpha=1.):
         self.y = y.copy()
         self.y[~mask] = 0.
@@ -95,7 +95,7 @@ class MSEwithMask:
     def __call__(self, x):
         return self.a * (self.alpha * self.y + x)
 
-class MSEwithMaskTensor:
+class MaskMSETensor:
     def __init__(self, y, mask, alpha=1.):
         self.y = y.clone()
         self.y[~mask] = 0.
@@ -106,3 +106,59 @@ class MSEwithMaskTensor:
 
     def __call__(self, x):
         return self.a * (self.alpha * self.y + x)
+
+# mse for deblurring
+class CirculantMSE:
+    def __init__(self, y, window, input_shape, alpha=1.):
+        self.Hty = tools.transposed_correlate(y, window)
+        self.window = window
+        autocorr = correlate2d(window, window, mode='full')
+        self.input_shape = input_shape
+        shift = (window.shape[0]-1, window.shape[1]-1)
+        autocorr = np.pad(autocorr, ((0, input_shape[0]-autocorr.shape[0]), (0, input_shape[1]-autocorr.shape[1])), 'constant', constant_values=((0, 0), (0, 0)))
+        self.autocorr = alpha * np.roll(autocorr, (-shift[0], -shift[1]), axis=(0, 1))
+        self.alpha = alpha
+        self.autocorr[0, 0] += 1
+        self.inv_window = tools.fft2d(self.autocorr)
+
+    def __call__(self, x):
+        tmp = self.alpha * self.Hty + x
+        tmp = tools.fft2d(tmp)
+        result = np.real(tools.ifft2d(tmp / self.inv_window))
+        return result
+
+class AverageDownsampleMSE:
+    def __init__(self, y, size, alpha, input_shape):
+        self.size = size
+        self.alpha = alpha
+        self.input_shape = input_shape
+        self.size = size
+        self.aAty = np.zeros(input_shape)
+        M, N = self.input_shape
+        for i, m in enumerate(range(0, M, size)):
+            for j, n in enumerate(range(0, N, size)):
+                step_m = size
+                step_n = size
+                if M - m < size:
+                    step_m = M - m
+                if N - n < size:
+                    step_n = N - n
+                self.aAty[m:m+step_m, n:n+step_n] = y[i, j] / (step_m * step_n)
+        self.aAty = self.aAty * self.alpha
+
+    def __call__(self, x):
+        x = x + self.aAty
+        output = np.zeros_like(x)
+        M, N = self.input_shape
+        for m in range(0, M, self.size):
+            for n in range(0, N, self.size):
+                step_m = self.size
+                step_n = self.size
+                if M - m < self.size:
+                    step_m = M - m
+                if N - n < self.size:
+                    step_n = N - n
+                scale = self.alpha / ((step_m * step_n))
+                output[m:m+step_m, n:n+step_n] = (x[m:m+step_m, n:n+step_n]).mean() * (scale / (1 + scale))
+        output = x - output
+        return output
