@@ -42,7 +42,7 @@ class PnP_ADMM:
             u = u + diff
 
             if stop_condition != None:
-                if stop_condition(x, v, transform):
+                if stop_condition(x, v, self.transform):
                     break
 
         if return_value == 'both':
