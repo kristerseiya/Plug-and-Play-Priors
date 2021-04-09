@@ -72,7 +72,7 @@ elif args.prior == 'dncnn':
     y_t = y_t.view(1, 1, *y_t.size())
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
-    mseloss = prox.MSEwithMaskTensor(y_t, mask_t, args.alpha)
+    mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
     def stop_condition(x, v, t):
         error = torch.pow(x - v, 2).mean().item()
         print(error)
