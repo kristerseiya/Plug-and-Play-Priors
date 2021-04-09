@@ -23,10 +23,8 @@ class PnP_ADMM:
         else:
             self.u_init = copy.deepcopy(u)
 
-    def run(self, iter=100, relax=0., return_value='both', verbose=True):
+    def run(self, iter=100, relax=0., return_value='both', verbose=False):
 
-        # v = np.zeros(self.prior.input_shape)
-        # u = np.zeros(self.prior.input_shape)
         v = self.v_init
         u = self.u_init
 
