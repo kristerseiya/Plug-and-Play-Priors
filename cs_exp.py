@@ -65,7 +65,7 @@ for i in range(args.trials):
         # optimize
         dct_transform = DCT_Transform()
         optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
-        optimizer.init(np.zeros(img.shape, dtype=np.float64))
+        optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
     # use trained prior from DnCNN
@@ -78,7 +78,7 @@ for i in range(args.trials):
         mask_t = mask_t.view(1, 1, *mask_t.size())
         mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
         optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
-        optimizer.init(torch.zeros_like(y_t))
+        optimizer.init(torch.rand_like(y_t), torch.zeros_like(y_t))
         recon_t = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
         recon = recon_t.cpu().numpy().squeeze(0).squeeze(0)
 
@@ -87,7 +87,7 @@ for i in range(args.trials):
 
         tv_prior = prox.TVNorm(args.lambd)
         optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
-        optimizer.init(np.zeros_like(y))
+        optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
     # block matching with 3D filter
@@ -96,7 +96,7 @@ for i in range(args.trials):
         bm3d_prior = prox.BM3D_Prior(args.lambd)
 
         optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
-        optimizer.init(np.zeros_like(y))
+        optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
     recon = tools.image2uint8(recon)

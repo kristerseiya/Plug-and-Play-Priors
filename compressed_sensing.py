@@ -61,7 +61,7 @@ if args.prior == 'dct':
     # optimize
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
-    optimizer.init(np.zeros_like(y))
+    optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
@@ -73,17 +73,16 @@ elif args.prior == 'dncnn':
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
     mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
-    def stop_condition(x, v, t):
-        error = torch.pow(x - v, 2).mean().item()
-        print(error)
-        return False
+    # def stop_condition(x, v, t):
+    #     error = torch.pow(x - v, 2).mean().item()
+    #     print(error)
+    #     return False
     optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
-    optimizer.init(torch.zeros_like(y_t))
+    optimizer.init(torch.rand_like(y_t), torch.zeros_like(y_t))
     recon_t = optimizer.run(iter=args.iter,
                             relax=args.relax,
                             return_value='x',
-                            verbose=args.verbose,
-                            stop_condition=stop_condition)
+                            verbose=args.verbose)
     recon = recon_t.cpu().numpy().squeeze(0).squeeze(0)
 
 # total variation norm
@@ -91,7 +90,7 @@ elif args.prior == 'tv':
 
     tv_prior = prox.TVNorm(args.lambd)
     optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
-    optimizer.init(np.zeros_like(y))
+    optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
@@ -100,7 +99,7 @@ elif args.prior == 'bm3d':
     bm3d_prior = prox.BM3D_Prior(args.lambd)
 
     optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
-    optimizer.init(np.zeros_like(y))
+    optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 
