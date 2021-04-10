@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img)
+img = np.array(img) / 255.
 
 mse_result = np.zeros([args.trials])
 ssim_result = np.zeros([args.trials])
@@ -40,7 +40,7 @@ for i in range(args.trials):
     ri = np.random.choice(img.size, k, replace=False)
     mask = np.ones(img.shape, dtype=bool) * False
     mask.T.flat[ri] = True
-    y = img.copy() / 255.
+    y = img.copy()
     if args.noise != 0:
         y = noise.add_gauss(y, std=args.noise / 255.)
     y[~mask] = 0.
@@ -99,12 +99,11 @@ for i in range(args.trials):
         optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
         recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
 
-    recon = tools.image2uint8(recon)
 
     # reconstruction quality assessment
-    mse_result[i] = tools.compute_mse(img, recon, scale=255)[0]
-    ssim_result[i] = tools.ssim(img, recon, scale=255).mean()
-    msssim_result[i] = tools.msssim(img, recon, scale=255).mean()
+    mse_result[i] = tools.compute_mse(img, recon, scale=1)[0]
+    ssim_result[i] = tools.ssim(img, recon, scale=1).mean()
+    msssim_result[i] = tools.msssim(img, recon, scale=1).mean()
 
 print('MSE: {:.5f}'.format(mse_result.mean()))
 print('SSIM: {:.5f}'.format(ssim_result.mean()))

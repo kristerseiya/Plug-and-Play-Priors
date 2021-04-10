@@ -15,6 +15,7 @@ import noise
 # command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
+parser.add_argument('--idx', help='File with index of sampled points', type=str, default=None)
 parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dncnn')
@@ -22,21 +23,26 @@ parser.add_argument('--iter', help='number of iteration', type=int, default=100)
 parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=100.)
 parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
 parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
-parser.add_argument('--save', help='a directory to save result', type=str, default=None)
+parser.add_argument('--save_recon', help='file name for recoonstructed image', type=str, default=None)
+parser.add_argument('--save_idx', help='file name for storing index', type=str, default=None)
 parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img)
+img = np.array(img) / 255.
 
-# do random sampling from the image
-k = int(img.size * args.sample)
-ri = np.random.choice(img.size, k, replace=False)
+if args.idx != None:
+    ri = np.fromfile(args.idx, dtype=np.int32)
+else:
+    # do random sampling from the image
+    k = int(img.size * args.sample)
+    ri = np.random.choice(img.size, k, replace=False)
+
 mask = np.ones(img.shape, dtype=bool) * False
 mask.T.flat[ri] = True
-y = img.copy() / 255.
+y = img.copy()
 if args.noise != 0:
     y = noise.add_gauss(y, std=args.noise / 255.)
 y[~mask] = 0.
@@ -99,13 +105,10 @@ elif args.prior == 'bm3d':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 
-# img = tools.image2uint8(img)
-recon = tools.image2uint8(recon)
-
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon, scale=255)
-ssim = tools.ssim(img, recon, scale=255).mean()
-msssim = tools.msssim(img, recon, scale=255).mean()
+mse, psnr = tools.compute_mse(img, recon, scale=1.)
+ssim = tools.ssim(img, recon, scale=1.).mean()
+msssim = tools.msssim(img, recon, scale=1.).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
@@ -115,19 +118,8 @@ print('MS-SSIM: {:.5f}'.format(msssim))
 tools.stackview([img, y, recon], width=20, method='Pillow')
 
 # save result
-if args.save != None:
-    if not os.path.exists(args.save):
-        os.makedirs(args.save)
-    image_name = args.image.split('/')[-1]
-    image_name = image_name.split('.')[-2]
-    key = datetime.now().strftime('%m%d%H%M%S')
-    rate = str(args.sample).replace('.', '')
-    original_name = image_name + '_orignal.png'
-    compressed_name = image_name + '_compressed_' + rate + '_' + key + '.png'
-    restored_name = image_name + '_restored_' + rate + '_' + args.prior + '_' + key + '.png'
-    original_path = os.path.join(args.save, original_name)
-    compressed_path = os.path.join(args.save, compressed_name)
-    restored_path = os.path.join(args.save, restored_name)
-    Image.fromarray(tools.image2uint8(img), 'L').save(original_path)
-    Image.fromarray(tools.image2uint8(y), 'L').save(compressed_path)
-    Image.fromarray(tools.image2uint8(recon), 'L').save(restored_path)
+if args.save_recon != None:
+    Image.fromarray(tools.image2uint8(recon), 'L').save(args.save_recon + '.png')
+    
+if args.idx == None and args.save_idx != None:
+    ri.astype(np.int32).tofile(args.save_idx)
