@@ -15,6 +15,7 @@ import noise
 # command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
+parser.add_argument('--mask', help='File with index of sampled points', type=str, default=None)
 parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dncnn')
@@ -31,9 +32,13 @@ args = parser.parse_args()
 img = Image.open(args.image).convert('L')
 img = np.array(img)
 
-# do random sampling from the image
-k = int(img.size * args.sample)
-ri = np.random.choice(img.size, k, replace=False)
+if args.mask != None:
+    ri = np.fromfile(args.mask, dtype=np.int32)
+else:
+    # do random sampling from the image
+    k = int(img.size * args.sample)
+    ri = np.random.choice(img.size, k, replace=False)
+
 mask = np.ones(img.shape, dtype=bool) * False
 mask.T.flat[ri] = True
 y = img.copy() / 255.
