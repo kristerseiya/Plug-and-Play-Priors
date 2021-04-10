@@ -3,15 +3,6 @@ import torch
 from torch import nn
 from . import model
 
-def single2tensor4(img):
-    return torch.from_numpy(np.ascontiguousarray(img)).permute(2, 0, 1).float().unsqueeze(0)
-
-def tensor2single(img):
-    img = img.data.squeeze().float().cpu().numpy()
-    if img.ndim == 3:
-        img = np.transpose(img, (1, 2, 0))
-
-    return img
 
 def load_dncnn(model_path, device=None):
 
