@@ -119,7 +119,7 @@ tools.stackview([img, y, recon], width=20, method='Pillow')
 
 # save result
 if args.save_recon != None:
-    Image.fromarray(tools.image2uint8(recon), 'L').save(args.save_recon)
-
+    Image.fromarray(tools.image2uint8(recon), 'L').save(args.save_recon + '.png')
+    
 if args.idx == None and args.save_idx != None:
     ri.astype(np.int32).tofile(args.save_idx)
