@@ -15,7 +15,7 @@ import noise
 # command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
-parser.add_argument('--mask', help='File with index of sampled points', type=str, default=None)
+parser.add_argument('--idx', help='File with index of sampled points', type=str, default=None)
 parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dncnn')
@@ -32,8 +32,8 @@ args = parser.parse_args()
 img = Image.open(args.image).convert('L')
 img = np.array(img)
 
-if args.mask != None:
-    ri = np.fromfile(args.mask, dtype=np.int32)
+if args.idx != None:
+    ri = np.fromfile(args.idx, dtype=np.int32)
 else:
     # do random sampling from the image
     k = int(img.size * args.sample)
@@ -130,9 +130,12 @@ if args.save != None:
     original_name = image_name + '_orignal.png'
     compressed_name = image_name + '_compressed_' + rate + '_' + key + '.png'
     restored_name = image_name + '_restored_' + rate + '_' + args.prior + '_' + key + '.png'
+    idx_name = image_name + '_idx_' + rate + key
     original_path = os.path.join(args.save, original_name)
     compressed_path = os.path.join(args.save, compressed_name)
     restored_path = os.path.join(args.save, restored_name)
+    idx_path = os.path.join(args.save, idx_name)
     Image.fromarray(tools.image2uint8(img), 'L').save(original_path)
     Image.fromarray(tools.image2uint8(y), 'L').save(compressed_path)
     Image.fromarray(tools.image2uint8(recon), 'L').save(restored_path)
+    ri.astype(np.int32).tofile(idx_path)
