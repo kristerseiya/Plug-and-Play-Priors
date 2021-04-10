@@ -30,7 +30,7 @@ args = parser.parse_args()
 
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img)
+img = np.array(img) / 255.
 
 if args.idx != None:
     ri = np.fromfile(args.idx, dtype=np.int32)
@@ -41,7 +41,7 @@ else:
 
 mask = np.ones(img.shape, dtype=bool) * False
 mask.T.flat[ri] = True
-y = img.copy() / 255.
+y = img.copy()
 if args.noise != 0:
     y = noise.add_gauss(y, std=args.noise / 255.)
 y[~mask] = 0.
@@ -104,13 +104,10 @@ elif args.prior == 'bm3d':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 
-# img = tools.image2uint8(img)
-recon = tools.image2uint8(recon)
-
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon, scale=255)
-ssim = tools.ssim(img, recon, scale=255).mean()
-msssim = tools.msssim(img, recon, scale=255).mean()
+mse, psnr = tools.compute_mse(img, recon, scale=1.)
+ssim = tools.ssim(img, recon, scale=1.).mean()
+msssim = tools.msssim(img, recon, scale=1.).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
