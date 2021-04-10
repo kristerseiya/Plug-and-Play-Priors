@@ -6,6 +6,24 @@ This is an attempted implementation of Plug-and-Play ADMM.
 ## Compressed Sensing
 ![Alt text](result/tiger_dncnn.png?raw=true "Compressed Sensing")
 
+```markdown
+python compressed_sensing.py -h
+
+  --image IMAGE               path to image
+  --idx IDX                   File with index of sampled points (binary int32)
+  --sample SAMPLE             sample rate from 0 to 1 (default 0.2)
+  --noise NOISE               add gaussian noise with given noise level (default 0)
+  --prior PRIOR               image prior option ['dct' or 'dncnn' or 'tv' or 'bm3d']
+  --iter ITER                 number of iteration (default 100)
+  --alpha ALPHA               coeefficient of data fidelity term
+  --lambd LAMBD               coeefficient of regularization term
+  --weights WEIGHTS           path to DnCNN weights
+  --save_recon SAVE_RECON     file name for recoonstructed image
+  --save_idx SAVE_IDX         file name for storing index
+  --relax RELAX               relaxation for ADMM (from 0 to 1, default 0)
+  --verbose
+```
+
 ## Gaussian Deblurring
 ![Alt text](result/gaussian_deblur_1515.PNG?raw=true "Gaussian Deblurring")
 
