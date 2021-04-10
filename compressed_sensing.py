@@ -23,7 +23,8 @@ parser.add_argument('--iter', help='number of iteration', type=int, default=100)
 parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=100.)
 parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
 parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
-parser.add_argument('--save', help='a directory to save result', type=str, default=None)
+parser.add_argument('--save_recon', help='file name for recoonstructed image', type=str, default=None)
+parser.add_argument('--save_idx', help='file name for storing index', type=str, default=None)
 parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
@@ -117,22 +118,8 @@ print('MS-SSIM: {:.5f}'.format(msssim))
 tools.stackview([img, y, recon], width=20, method='Pillow')
 
 # save result
-if args.save != None:
-    if not os.path.exists(args.save):
-        os.makedirs(args.save)
-    image_name = args.image.split('/')[-1]
-    image_name = image_name.split('.')[-2]
-    key = datetime.now().strftime('%m%d%H%M%S')
-    rate = str(args.sample).replace('.', '')
-    original_name = image_name + '_orignal.png'
-    compressed_name = image_name + '_compressed_' + rate + '_' + key + '.png'
-    restored_name = image_name + '_restored_' + rate + '_' + args.prior + '_' + key + '.png'
-    idx_name = image_name + '_idx_' + rate + key
-    original_path = os.path.join(args.save, original_name)
-    compressed_path = os.path.join(args.save, compressed_name)
-    restored_path = os.path.join(args.save, restored_name)
-    idx_path = os.path.join(args.save, idx_name)
-    Image.fromarray(tools.image2uint8(img), 'L').save(original_path)
-    Image.fromarray(tools.image2uint8(y), 'L').save(compressed_path)
-    Image.fromarray(tools.image2uint8(recon), 'L').save(restored_path)
-    ri.astype(np.int32).tofile(idx_path)
+if args.save_recon != None:
+    Image.fromarray(tools.image2uint8(recon), 'L').save(args.save_recon)
+
+if args.idx == None and args.save_idx != None:
+    ri.astype(np.int32).tofile(args.save_idx)
