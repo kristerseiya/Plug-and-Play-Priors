@@ -6,6 +6,16 @@ This is an attempted implementation of Plug-and-Play ADMM.
 ## Compressed Sensing
 ![Alt text](result/tiger_dncnn.png?raw=true "Compressed Sensing")
 
+```bash
+python compressed_sensing.py \
+       --image imgs/tiger_224x224.png \
+       --sample 0.2 \
+       --prior dncnn \
+       --alpha 2000 \
+       --iter 100 \
+       --weights DnCNN/dncnn50.pth \
+       --verbose
+```
 ```markdown
 python compressed_sensing.py -h
 
@@ -27,8 +37,30 @@ python compressed_sensing.py -h
 ## Gaussian Deblurring
 ![Alt text](result/gaussian_deblur_1515.PNG?raw=true "Gaussian Deblurring")
 
+```bash
+python deblurr.py \
+       --image imgs/tiger_224x224.png \
+       --iter 10 \
+       --sigma 1.5 \
+       --alpha 1000 \
+       --window 15 \
+       --weights DnCNN/dncnn50.pth \
+       --verbose
+```
+
 ## Depixelation
 ![Alt text](result/depixelize_result.PNG?raw=true "Depixelation")
+
+```bash
+python depixelate.py \
+       --image imgs/tiger_224x224.png \
+       --size 3 \
+       --alpha 100 \
+       --iter 100 \
+       --prior dncnn \
+       --weights DnCNN/dncnn50.pth \
+       --verbose
+```
 
 # Installation
 
