@@ -29,6 +29,9 @@ y = net(x)
 y = y.view(y.size(-2), y.size(-1))
 recon = y.cpu().numpy()
 
+img = tools.image2uint8(img)
+recon = tools.image2uint8(recon)
+
 mse, psnr = tools.compute_mse(img, recon, 1)
 ssim = tools.ssim(img, recon, 1).mean()
 msssim = tools.msssim(img, recon, 1).mean()
