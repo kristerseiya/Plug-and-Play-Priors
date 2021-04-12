@@ -78,6 +78,8 @@ elif args.prior == 'bm3d':
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
+img = tools.image2uint8(img)
+recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon, scale=255)

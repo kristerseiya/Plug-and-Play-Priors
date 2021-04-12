@@ -104,6 +104,8 @@ elif args.prior == 'bm3d':
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
+img = tools.image2uint8(img)
+recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon, scale=1.)
@@ -120,6 +122,6 @@ tools.stackview([img, y, recon], width=20, method='Pillow')
 # save result
 if args.save_recon != None:
     Image.fromarray(tools.image2uint8(recon), 'L').save(args.save_recon + '.png')
-    
+
 if args.idx == None and args.save_idx != None:
     ri.astype(np.int32).tofile(args.save_idx)
