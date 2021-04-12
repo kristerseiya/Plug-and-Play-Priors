@@ -18,6 +18,10 @@ def load_dncnn(model_path, device=None):
     # ----------------------------------------
     state_dict = torch.load(model_path, map_location=device)
     nb = len(state_dict.keys()) // 2
+    if state_dict['model.0.weight'].size(1) == 3:
+        n_channels = 3
+    else:
+        n_channels = 1
 
     net = model.DnCNN(in_nc=n_channels, out_nc=n_channels, nc=64, nb=nb, act_mode='R')  # use this if BN is not merged by utils_bnorm.merge_bn(model)
     net.load_state_dict(state_dict, strict=True)
