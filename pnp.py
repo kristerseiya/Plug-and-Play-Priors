@@ -18,10 +18,10 @@ class PnP_ADMM:
 
     def init(self, v, u=None):
         self.v_init = copy.deepcopy(v)
-        if u == None:
-            self.u_init = copy.deepcopy(v)
-        else:
+        if u != None:
             self.u_init = copy.deepcopy(u)
+        else:
+            self.u_init = copy.deepcopy(v)
 
     def run(self, iter=100, relax=0., return_value='both', verbose=False):
 
