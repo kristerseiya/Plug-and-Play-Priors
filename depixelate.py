@@ -13,7 +13,7 @@ import noise
 # command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
-parser.add_argument('--size', help='pixel size', type=int, default=15)
+parser.add_argument('--size', help='pixel size', type=int, default=3)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dncnn')
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
 parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=1000)
