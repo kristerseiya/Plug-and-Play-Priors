@@ -68,15 +68,18 @@ class ImageDataSubset(Dataset):
                 self.transform.transforms.insert(0, transforms.RandomCrop(patch_size))
 
     def __getitem__(self, idx):
-        if self.dataset.store == 'RAM':
-            return self.transform(self.dataset.images[self.indices[idx // self.repeat]])
-        return self.transform(Image.open(self.dataset.images[self.indices[idx // self.repeat]]).convert('L'))
+        if self.dataset.store == 'DISK':
+            if self.dataset.gray:
+                return self.transform(Image.open(self.dataset.images[self.indices[idx // self.repeat]]).convert('L'))
+            else:
+                return self.transform(Image.open(self.dataset.images[self.indices[idx // self.repeat]]).convert('RGB'))
+        return self.transform(self.dataset.images[self.indices[idx // self.repeat]])
 
     def __len__(self):
         return len(self.indices) * self.repeat
 
 class ImageDataset(Dataset):
-    def __init__(self, root_dirs, mode='none', scale=-1,
+    def __init__(self, root_dirs, mode='none', gray=True, scale=-1,
                  patch_size=-1, repeat=1, store='RAM', extensions='png'):
         super().__init__()
         self.images = list()
@@ -84,6 +87,7 @@ class ImageDataset(Dataset):
         self.repeat = repeat
         self.scale = scale
         self.patch_size = patch_size
+        self.gray = gray
 
         if type(extensions) != list:
             extensions = [extensions]
@@ -103,7 +107,11 @@ class ImageDataset(Dataset):
             pbar = tqdm(total=n_files, position=0, leave=False, file=sys.stdout)
 
             for file_path in file_paths:
-                fptr = Image.open(file_path).convert('L')
+                fptr = Image.open(file_path)
+                if self.gray:
+                    fptr = fptr.convert('L')
+                else:
+                    fptr = fptr.convert('RGB')
                 file_copy = fptr.copy()
                 fptr.close()
                 if scale > 0:
@@ -143,9 +151,12 @@ class ImageDataset(Dataset):
         return int(len(self.images) * self.repeat)
 
     def __getitem__(self, idx):
-        if self.store == 'RAM':
-            return self.transform(self.images[idx // self.repeat])
-        return self.transform(Image.open(self.images[idx // self.repeat]).convert('L'))
+        if self.store == 'DISK':
+            if self.gray:
+                return self.transform(Image.open(self.images[idx // self.repeat]).convert('L'))
+            else:
+                return self.transform(Image.open(self.images[idx // self.repeat]).convert('RGB'))
+        return self.transform(self.images[idx // self.repeat])
 
     def split(self, *r):
         ratios = np.array(r)
