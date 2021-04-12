@@ -21,6 +21,7 @@ parser.add_argument('--lambd', help='coeefficient of prior', type=float, default
 parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
 parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
+parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 
 def pixelate(x, size):
@@ -40,9 +41,9 @@ def pixelate(x, size):
 
 # read image
 img = Image.open(args.image).convert('L')
-img = np.array(img)
+img = np.array(img) / 255.
 
-y = pixelate(img / 255., args.size)
+y = pixelate(img, args.size)
 forward = prox.AverageDownsampleMSE(y, args.size, args.alpha, img.shape)
 
 
@@ -64,7 +65,7 @@ if args.prior == 'dct':
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(forward, sparse_prior, transform=dct_transform)
     optimizer.init(np.zeros(img.shape))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
@@ -72,7 +73,7 @@ elif args.prior == 'dncnn':
     dncnn_prior = prox.DnCNN_Prior(args.weights)
     optimizer = pnp.PnP_ADMM(forward, dncnn_prior)
     optimizer.init(np.zeros(img.shape))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # total variation norm
 elif args.prior == 'tv':
@@ -80,7 +81,7 @@ elif args.prior == 'tv':
     tv_prior = prox.TVNorm(args.lambd)
     optimizer = pnp.PnP_ADMM(forward, tv_prior)
     optimizer.init(np.zeros(img.shape))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
@@ -88,14 +89,12 @@ elif args.prior == 'bm3d':
     bm3d_prior = prox.BM3D_Prior(args.lambd)
     optimizer = pnp.PnP_ADMM(forward, bm3d_prior)
     optimizer.init(np.zeros(img.shape))
-    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x')
+    recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
-
-recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
 mse, psnr = tools.compute_mse(img, recon)
-ssim = tools.compute_ssim(img, recon)
+ssim = tools.ssim(img, recon).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
