@@ -64,7 +64,7 @@ if args.prior == 'dct':
     # optimize
     dct_transform = DCT_Transform()
     optimizer = pnp.PnP_ADMM(forward, sparse_prior, transform=dct_transform)
-    optimizer.init(np.zeros(img.shape))
+    optimizer.init(np.random.rand(*img.shape), np.zeros_like(img))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
@@ -72,7 +72,7 @@ elif args.prior == 'dncnn':
 
     dncnn_prior = prox.DnCNN_Prior(args.weights)
     optimizer = pnp.PnP_ADMM(forward, dncnn_prior)
-    optimizer.init(np.zeros(img.shape))
+    optimizer.init(np.random.rand(*img.shape), np.zeros_like(img))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # total variation norm
@@ -80,7 +80,7 @@ elif args.prior == 'tv':
 
     tv_prior = prox.TVNorm(args.lambd)
     optimizer = pnp.PnP_ADMM(forward, tv_prior)
-    optimizer.init(np.zeros(img.shape))
+    optimizer.init(np.random.rand(*img.shape), np.zeros_like(img))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
@@ -88,7 +88,7 @@ elif args.prior == 'bm3d':
 
     bm3d_prior = prox.BM3D_Prior(args.lambd)
     optimizer = pnp.PnP_ADMM(forward, bm3d_prior)
-    optimizer.init(np.zeros(img.shape))
+    optimizer.init(np.random.rand(*img.shape), np.zeros_like(img))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 
