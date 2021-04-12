@@ -28,15 +28,27 @@ def image2uint8(img):
 
 def stackview(imgs, width=20, method='matplotlib'):
     h = imgs[0].shape[0]
-    sep = np.zeros([h, width], dtype=np.uint8)
+    color = False
+    if imgs[0].ndim == 3:
+        color = True
+    if color:
+        sep = np.zeros([h, width, 3], dtype=np.uint8)
+    else:
+        sep = np.zeros([h, width], dtype=np.uint8)
     view = image2uint8(imgs[0])
     for img in imgs[1:]:
         view = np.concatenate([view, sep, image2uint8(img)], axis=1)
     if method == 'Pillow':
-        view = Image.fromarray(view, 'L')
+        if color:
+            view = Image.fromarray(view, 'RGB')
+        else:
+            view = Image.fromarray(view, 'L')
         view.show()
     elif method == 'matplotlib':
-        plt.imshow(view, cmap='gray')
+        if color:
+            plt.imshow(view)
+        else:
+            plt.imshow(view, cmap='gray')
         plt.show()
 
 def compute_mse(x, y, scale=None):
