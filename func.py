@@ -21,17 +21,17 @@ class L1Norm:
     def __init__(self, lambd):
         self.lambd = lambd
 
-    def __call__(self, x):
+    def prox(self, x):
         return np.maximum(np.abs(x) - self.lambd, 0) * np.sign(x)
 
 class TVNorm:
     def __init__(self, lambd):
         self.lambd = lambd
 
-    def __call__(self, x):
+    def prox(self, x):
         return prx_tv(x, self.lambd)
 
-class DnCNN_Prior:
+class DnCNNPrior:
     def __init__(self, model_path, use_tensor=False,
                  patch_size=-1, device=None):
 
@@ -44,7 +44,7 @@ class DnCNN_Prior:
         self.patch_size = patch_size
         self.use_tensor = use_tensor
 
-    def __call__(self, x):
+    def prox(self, x):
         if not self.use_tensor:
             x = torch.tensor(x, dtype=torch.float32,
                              requires_grad=False, device=self.device)
@@ -58,11 +58,11 @@ class DnCNN_Prior:
             return y
         return self.net(x)
 
-class BM3D_Prior:
+class BM3DPrior:
     def __init__(self, lambd):
-        self.std = np.sqrt(lambd / 2)
+        self.std = np.sqrt(lambd)
 
-    def __call__(self, x):
+    def prox(self, x):
         return pybm3d.bm3d.bm3d(x, self.std)
 
 # 1/2*alpha*|| y - x ||_2^2
@@ -71,7 +71,7 @@ class MSE:
         self.y = y
         self.alpha = alpha
 
-    def __call__(self, x):
+    def prox(self, x):
         return (self.alpha*self.y + x) / (self.alpha + 1)
 
 # 1/2*alpha*|| y - Ax ||_2^2
@@ -83,7 +83,7 @@ class MSE2:
         I = np.eye(self.AtA.shape[0])
         self.aAtA_inv = la.inv(I + self.alpha * self.AtA)
 
-    def __call__(self, x):
+    def prox(self, x):
         return self.aAtA_inv @ (self.alpha * self.Aty + x)
 
 # mse for compressed sensing
@@ -96,7 +96,7 @@ class MaskMSE:
         self.a = np.ones(self.mask.shape)
         self.a[self.mask] = 1. / (1 + alpha)
 
-    def __call__(self, x):
+    def prox(self, x):
         return self.a * (self.alpha * self.y + x)
 
 class MaskMSETensor:
@@ -108,7 +108,7 @@ class MaskMSETensor:
         self.a = torch.ones_like(self.mask).type(torch.float32)
         self.a[self.mask] = 1. / (1 + alpha)
 
-    def __call__(self, x):
+    def prox(self, x):
         return self.a * (self.alpha * self.y + x)
 
 # mse for deblurring
@@ -125,7 +125,7 @@ class CirculantMSE:
         self.autocorr[0, 0] += 1
         self.inv_window = tools.fft2d(self.autocorr)
 
-    def __call__(self, x):
+    def prox(self, x):
         tmp = self.alpha * self.Hty + x
         tmp = tools.fft2d(tmp)
         result = np.real(tools.ifft2d(tmp / self.inv_window))
@@ -150,7 +150,7 @@ class AverageDownsampleMSE:
                 self.aAty[m:m+step_m, n:n+step_n] = y[i, j] / (step_m * step_n)
         self.aAty = self.aAty * self.alpha
 
-    def __call__(self, x):
+    def prox(self, x):
         x = x + self.aAty
         output = np.zeros_like(x)
         M, N = self.input_shape

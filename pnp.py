@@ -10,7 +10,7 @@ class IdentityTransform:
     def inverse(self, v):
         return v
 
-class PnP_ADMM:
+class PnPADMM:
     def __init__(self, forward, image_prior, transform=None):
         self.forward = forward
         self.prior = image_prior
@@ -30,10 +30,10 @@ class PnP_ADMM:
             if verbose:
                 print('Iteration #{:d}'.format(i+1))
 
-            x = self.forward(self.transform.inverse(v-u))
+            x = self.forward.prox(self.transform.inverse(v-u))
 
             x_relaxed = (1 - relax) * self.transform(x) + relax * v
-            v = self.prior(x_relaxed+u)
+            v = self.prior.prox(x_relaxed+u)
 
             diff = x_relaxed - v
             u = u + diff
