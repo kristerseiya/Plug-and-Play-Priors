@@ -6,7 +6,7 @@ import argparse
 from scipy.signal import correlate2d
 
 import tools
-import prox
+import func
 import pnp
 import noise
 
@@ -32,13 +32,13 @@ gauss_window = tools.get_gauss2d(args.window, args.window, args.sigma)
 y = correlate2d(img, gauss_window, mode='same', boundary='wrap')
 
 # forward model
-forward = prox.CirculantMSE(y, gauss_window, input_shape=img.shape, alpha=args.alpha)
+forward = func.CirculantMSE(y, gauss_window, input_shape=img.shape, alpha=args.alpha)
 
 # use sparsity in DCT domain as a prior
 if args.prior == 'dct':
 
     # prior
-    sparse_prior = prox.L1Norm(args.lambd, input_shape=img.shape)
+    sparse_prior = func.L1Norm(args.lambd, input_shape=img.shape)
 
     # define transformation from x to v
     class DCT_Transform:
@@ -50,31 +50,31 @@ if args.prior == 'dct':
 
     # optimize
     dct_transform = DCT_Transform()
-    optimizer = pnp.PnP_ADMM(forward, sparse_prior, transform=dct_transform)
+    optimizer = pnp.PnPADMM(forward, sparse_prior, transform=dct_transform)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn_prior = prox.DnCNN_Prior(args.weights, use_tensor=False)
-    optimizer = pnp.PnP_ADMM(forward, dncnn_prior)
+    dncnn_prior = func.DnCNNPrior(args.weights, use_tensor=False)
+    optimizer = pnp.PnPADMM(forward, dncnn_prior)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # total variation norm
 elif args.prior == 'tv':
 
-    tv_prior = prox.TVNorm(args.lambd)
-    optimizer = pnp.PnP_ADMM(forward, tv_prior)
+    tv_prior = func.TVNorm(args.lambd)
+    optimizer = pnp.PnPADMM(forward, tv_prior)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
 
-    bm3d_prior = prox.BM3D_Prior(args.lambd)
-    optimizer = pnp.PnP_ADMM(forward, bm3d_prior)
+    bm3d_prior = func.BM3DPrior(args.lambd)
+    optimizer = pnp.PnPADMM(forward, bm3d_prior)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 

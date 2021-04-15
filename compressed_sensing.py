@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 
 import tools
-import prox
+import func
 import pnp
 import noise
 
@@ -48,16 +48,16 @@ if args.noise != 0:
 y[~mask] = 0.
 
 # forward model
-mseloss = prox.MaskMSE(y, mask, alpha=args.alpha)
+mseloss = func.MaskMSE(y, mask, alpha=args.alpha)
 
 # use sparsity in DCT domain as a prior
 if args.prior == 'dct':
 
     # prior
-    sparse_prior = prox.L1Norm(args.lambd)
+    sparse_prior = func.L1Norm(args.lambd)
 
     # define transformation from x to v
-    class DCT_Transform:
+    class DCTTransform:
         def __call__(self, x):
             return tools.dct2d(x)
 
@@ -65,21 +65,21 @@ if args.prior == 'dct':
             return tools.idct2d(v)
 
     # optimize
-    dct_transform = DCT_Transform()
-    optimizer = pnp.PnP_ADMM(mseloss, sparse_prior, transform=dct_transform)
+    dct_transform = DCTTransform()
+    optimizer = pnp.PnPADMM(mseloss, sparse_prior, transform=dct_transform)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn_prior = prox.DnCNN_Prior(args.weights, use_tensor=True)
+    dncnn_prior = func.DnCNNPrior(args.weights, use_tensor=True)
     y_t = torch.tensor(y, dtype=torch.float32, requires_grad=False, device=dncnn_prior.device)
     y_t = y_t.view(1, 1, *y_t.size())
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
-    mseloss = prox.MaskMSETensor(y_t, mask_t, args.alpha)
-    optimizer = pnp.PnP_ADMM(mseloss, dncnn_prior)
+    mseloss = func.MaskMSETensor(y_t, mask_t, args.alpha)
+    optimizer = pnp.PnPADMM(mseloss, dncnn_prior)
     optimizer.init(torch.rand_like(y_t), torch.zeros_like(y_t))
     recon_t = optimizer.run(iter=args.iter,
                             relax=args.relax,
@@ -90,17 +90,17 @@ elif args.prior == 'dncnn':
 # total variation norm
 elif args.prior == 'tv':
 
-    tv_prior = prox.TVNorm(args.lambd)
-    optimizer = pnp.PnP_ADMM(mseloss, tv_prior)
+    tv_prior = func.TVNorm(args.lambd)
+    optimizer = pnp.PnPADMM(mseloss, tv_prior)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
 
-    bm3d_prior = prox.BM3D_Prior(args.lambd)
+    bm3d_prior = func.BM3DPrior(args.lambd)
 
-    optimizer = pnp.PnP_ADMM(mseloss, bm3d_prior)
+    optimizer = pnp.PnPADMM(mseloss, bm3d_prior)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
@@ -121,7 +121,7 @@ tools.stackview([img, y, recon], width=20, method='Pillow')
 
 # save result
 if args.save_recon != None:
-    Image.fromarray(tools.image2uint8(recon), 'L').save(args.save_recon + '.png')
+    Image.fromarray(recon.astype(np.uint8), 'L').save(args.save_recon + '.png')
 
 if args.idx == None and args.save_idx != None:
     ri.astype(np.int32).tofile(args.save_idx)
