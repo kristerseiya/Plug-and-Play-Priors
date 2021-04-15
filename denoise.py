@@ -6,7 +6,7 @@ import argparse
 
 import tools
 import noise
-import prox
+import func
 from DnCNN import load_dncnn
 import torch
 
@@ -32,9 +32,9 @@ recon = y.cpu().numpy()
 img = tools.image2uint8(img)
 recon = tools.image2uint8(recon)
 
-mse, psnr = tools.compute_mse(img, recon, 1)
-ssim = tools.ssim(img, recon, 1).mean()
-msssim = tools.msssim(img, recon, 1).mean()
+mse, psnr = tools.compute_mse(img, recon, scale=255)
+ssim = tools.ssim(img, recon, scale=255).mean()
+msssim = tools.msssim(img, recon, scale=255).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))

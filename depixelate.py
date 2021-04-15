@@ -95,8 +95,8 @@ img = tools.image2uint8(img)
 recon = tools.image2uint8(recon)
 
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon)
-ssim = tools.ssim(img, recon).mean()
+mse, psnr = tools.compute_mse(img, recon, scale=255)
+ssim = tools.ssim(img, recon, scale=255).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
