@@ -100,7 +100,7 @@ class your_forward_or_prior_model:
   def __init__(self):
     # initialization if needed
 
-  def __call__(self, x):
+  def prox(self, x):
     # this method computes the proximal operator at a given value x
     # for an image prior, output is simply a
     # Gaussian-denoised image
@@ -114,7 +114,7 @@ class my_forward_model:
       self.y = y # measurement
       # do other stuff
 
-    def __call__(self, x):
+    def prox(self, x):
       # compute value of proximal operator at x
       return prox_output
 ```
@@ -124,7 +124,7 @@ class my_image_prior:
     def __init__(self):
       # initialization if needed
 
-    def __call__(self, x):
+    def prox(self, x):
       # compute value of proximal operator at x
       return prox_output
 ```
