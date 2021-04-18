@@ -12,29 +12,32 @@ import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', type=str, required=True)
-parser.add_argument('--lambd', type=float, default=0.05)
 parser.add_argument('--noise_lvl', type=float, default=25)
+parser.add_argument('--denoiser', type=str, default='dncnn')
 parser.add_argument('--weights', type=str, default='DnCNN/dncnn50.pth')
 args = parser.parse_args()
 
 img = Image.open(args.image).convert('L')
 img = np.array(img) / 255.
 noisy = noise.add_gauss(img, args.noise_lvl / 255.)
-#noisy = noise.add_poisson(img, 70.)
 
-net = load_dncnn(args.weights)
-x = torch.tensor(noisy, dtype=torch.float32, device=net.device)
-x = x.view(1, 1, *x.size())
-y = net(x)
-y = y.view(y.size(-2), y.size(-1))
-recon = y.cpu().numpy()
+if args.denoiser == 'dncnn':
+    net = load_dncnn(args.weights)
+    x = torch.tensor(noisy, dtype=torch.float32, device=net.device)
+    x = x.view(1, 1, *x.size())
+    y = net(x)
+    y = y.view(y.size(-2), y.size(-1))
+    recon = y.cpu().numpy()
+elif args.denoiser == 'bm3d':
+    bm3d_prior = func.BM3DPrior(lambd=(args.noise_lvl/255.)**2)
+    recon = bm3d_prior.prox(noisy)
+elif args.denoiser == 'tv':
+    tv_prior = func.TVNorm(lambd=(args.noise_lvl/255.*7)**2)
+    recon = tv_prior.prox(noisy)
 
-img = tools.image2uint8(img)
-recon = tools.image2uint8(recon)
-
-mse, psnr = tools.compute_mse(img, recon, scale=255)
-ssim = tools.ssim(img, recon, scale=255).mean()
-msssim = tools.msssim(img, recon, scale=255).mean()
+mse, psnr = tools.compute_mse(img, recon, scale=1)
+ssim = tools.ssim(img, recon, scale=1).mean()
+msssim = tools.msssim(img, recon, scale=1).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
