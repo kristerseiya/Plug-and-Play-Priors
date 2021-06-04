@@ -24,14 +24,14 @@ class L1Norm:
     def prox(self, x):
         return np.maximum(np.abs(x) - self.lambd, 0) * np.sign(x)
 
-class TVNorm:
+class ProxTV:
     def __init__(self, lambd):
         self.lambd = lambd
 
     def prox(self, x):
         return prx_tv(x, self.lambd)
 
-class DnCNNPrior:
+class DnCNN:
     def __init__(self, model_path, use_tensor=False,
                  patch_size=-1, device=None):
 
@@ -44,7 +44,7 @@ class DnCNNPrior:
         self.patch_size = patch_size
         self.use_tensor = use_tensor
 
-    def prox(self, x):
+    def __call__(self, x):
         if not self.use_tensor:
             x = torch.tensor(x, dtype=torch.float32,
                              requires_grad=False, device=self.device)
@@ -58,12 +58,12 @@ class DnCNNPrior:
             return y
         return self.net(x)
 
-class BM3DPrior:
-    def __init__(self, lambd):
-        self.std = np.sqrt(lambd)
+class BM3D:
+    def __init__(self, sigma):
+        self.sigma = sigma
 
-    def prox(self, x):
-        return pybm3d.bm3d.bm3d(x, self.std)
+    def __call__(self, x):
+        return pybm3d.bm3d.bm3d(x, self.sigma)
 
 # 1/2*alpha*|| y - x ||_2^2
 class MSE:

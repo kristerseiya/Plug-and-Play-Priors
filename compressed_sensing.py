@@ -20,8 +20,9 @@ parser.add_argument('--sample', help='sample rate', type=float, default=0.2)
 parser.add_argument('--noise', help='gaussian noise level', type=float, default=0)
 parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or \'tv\' or \'bm3d\']', type=str, default='dncnn')
 parser.add_argument('--iter', help='number of iteration', type=int, default=100)
-parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=100.)
-parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
+parser.add_argument('--alpha', help='coefficient of forward model', type=float, default=100.)
+parser.add_argument('--lambd', help='coefficient of prior', type=float, default=1e-2)
+parser.add_argument('--sigma', help='bm3d parameter', type=float, default=3)
 parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--save_recon', help='file name for recoonstructed image', type=str, default=None)
 parser.add_argument('--save_idx', help='file name for storing index', type=str, default=None)
@@ -75,13 +76,13 @@ if args.prior == 'dct':
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn_prior = func.DnCNNPrior(args.weights, use_tensor=True)
-    y_t = torch.tensor(y, dtype=torch.float32, requires_grad=False, device=dncnn_prior.device)
+    dncnn = func.DnCNN(args.weights, use_tensor=True)
+    y_t = torch.tensor(y, dtype=torch.float32, requires_grad=False, device=dncnn.device)
     y_t = y_t.view(1, 1, *y_t.size())
-    mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn_prior.device)
+    mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn.device)
     mask_t = mask_t.view(1, 1, *mask_t.size())
     mseloss = func.MaskMSETensor(y_t, mask_t, args.alpha)
-    optimizer = pnp.PnPADMM(mseloss, dncnn_prior)
+    optimizer = pnp.PnPADMM(mseloss, dncnn)
     optimizer.init(torch.rand_like(y_t), torch.zeros_like(y_t))
     recon_t = optimizer.run(iter=args.iter,
                             relax=args.relax,
@@ -92,17 +93,17 @@ elif args.prior == 'dncnn':
 # total variation norm
 elif args.prior == 'tv':
 
-    tv_prior = func.TVNorm(args.lambd)
-    optimizer = pnp.PnPADMM(mseloss, tv_prior)
+    tvprox = func.ProxTV(args.lambd)
+    optimizer = pnp.PnPADMM(mseloss, tvprox)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
 
-    bm3d_prior = func.BM3DPrior(args.lambd)
+    bm3d = func.BM3D(args.sigma / 255.)
 
-    optimizer = pnp.PnPADMM(mseloss, bm3d_prior)
+    optimizer = pnp.PnPADMM(mseloss, bm3d)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 

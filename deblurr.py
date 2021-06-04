@@ -57,24 +57,24 @@ if args.prior == 'dct':
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn_prior = func.DnCNNPrior(args.weights, use_tensor=False)
-    optimizer = pnp.PnPADMM(forward, dncnn_prior)
+    dncnn = func.DnCNN(args.weights, use_tensor=False)
+    optimizer = pnp.PnPADMM(forward, dncnn)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # total variation norm
 elif args.prior == 'tv':
 
-    tv_prior = func.TVNorm(args.lambd)
-    optimizer = pnp.PnPADMM(forward, tv_prior)
+    tvprox = func.TVNorm(args.lambd)
+    optimizer = pnp.PnPADMM(forward, tvprox)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # block matching with 3D filter
 elif args.prior == 'bm3d':
 
-    bm3d_prior = func.BM3DPrior(args.lambd)
-    optimizer = pnp.PnPADMM(forward, bm3d_prior)
+    bm3d = func.BM3D(args.lambd)
+    optimizer = pnp.PnPADMM(forward, bm3d)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 

@@ -11,9 +11,9 @@ class IdentityTransform:
         return v
 
 class PnPADMM:
-    def __init__(self, forward, image_prior, transform=None):
+    def __init__(self, forward, denoiser, transform=None):
         self.forward = forward
-        self.prior = image_prior
+        self.denoiser = denoiser
         self.transform = transform if transform != None else IdentityTransform()
 
     def init(self, v, u):
@@ -33,7 +33,7 @@ class PnPADMM:
             x = self.forward.prox(self.transform.inverse(v-u))
 
             x_relaxed = (1 - relax) * self.transform(x) + relax * v
-            v = self.prior.prox(x_relaxed+u)
+            v = self.denoiser(x_relaxed+u)
 
             diff = x_relaxed - v
             u = u + diff

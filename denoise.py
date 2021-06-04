@@ -29,11 +29,11 @@ if args.denoiser == 'dncnn':
     y = y.view(y.size(-2), y.size(-1))
     recon = y.cpu().numpy()
 elif args.denoiser == 'bm3d':
-    bm3d_prior = func.BM3DPrior(lambd=(args.noise_lvl/255.)**2)
-    recon = bm3d_prior.prox(noisy)
+    bm3d= func.BM3D(lambd=(args.noise_lvl/255.)**2)
+    recon = bm3d(noisy)
 elif args.denoiser == 'tv':
-    tv_prior = func.TVNorm(lambd=(args.noise_lvl/255.*7)**2)
-    recon = tv_prior.prox(noisy)
+    tvprox = func.ProxTV(lambd=(args.noise_lvl/255.*7)**2)
+    recon = tvprox(noisy)
 
 mse, psnr = tools.compute_mse(img, recon, scale=1)
 ssim = tools.ssim(img, recon, scale=1).mean()
