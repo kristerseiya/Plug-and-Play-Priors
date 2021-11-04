@@ -13,7 +13,7 @@ python inpaint.py \
        --prior dncnn \
        --alpha 2000 \
        --iter 100 \
-       --weights DnCNN/dncnn50.pth \
+       --weights Denoisers/dnsr/DnCNN/weights/dncnn50_17.pth \
        --verbose
 ```
 ```markdown
@@ -44,7 +44,7 @@ python deblurr.py \
        --sigma 1.5 \
        --alpha 1000 \
        --window 15 \
-       --weights DnCNN/dncnn50.pth \
+       --weights Denoisers/dnsr/DnCNN/weights/dncnn50_17.pth \
        --verbose
 ```
 
@@ -58,7 +58,7 @@ python sr.py \
        --alpha 100 \
        --iter 100 \
        --prior dncnn \
-       --weights DnCNN/dncnn50.pth \
+       --weights Denoisers/dnsr/DnCNN/weights/dncnn50_17.pth \
        --verbose
 ```
 
