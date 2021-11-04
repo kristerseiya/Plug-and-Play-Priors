@@ -6,12 +6,6 @@ import torch.nn.functional as F
 from scipy.signal import correlate2d
 from scipy.signal import fftconvolve
 
-try:
-    from prox_tv import tv1_2d as prx_tv
-    import pybm3d
-except:
-    pass
-
 import utils
 
 # 1/2*alpha*|| y - x ||_2^2
