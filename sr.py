@@ -69,9 +69,13 @@ if args.prior == 'dct':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
-elif args.prior == 'dncnn':
+elif args.prior in ['dncnn', 'cdncnn']:
 
-    dncnn = dnsr.DnCNN(args.weights)
+    if args.prior == 'dncnn':
+        dncnn = dnsr.DnCNN(args.weights, use_tensor=True)
+    else:
+        dncnn = dnsr.cDnCNN(args.weights, use_tensor=True)
+        dncnn.set_param(args.sigma / 255.)
     optimizer = pnp.PnPADMM(forward, dncnn)
     optimizer.init(np.random.rand(*img.shape), np.zeros_like(img))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)

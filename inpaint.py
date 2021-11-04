@@ -76,9 +76,13 @@ if args.prior == 'dct':
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
-elif args.prior == 'dncnn':
+elif args.prior in ['dncnn', 'cdncnn']:
 
-    dncnn = dnsr.DnCNN(args.weights, use_tensor=True)
+    if args.prior == 'dncnn':
+        dncnn = dnsr.DnCNN(args.weights, use_tensor=True)
+    else:
+        dncnn = dnsr.cDnCNN(args.weights, use_tensor=True)
+        dncnn.set_param(args.sigma / 255.)
     y_t = torch.tensor(y, dtype=torch.float32, requires_grad=False, device=dncnn.device)
     y_t = y_t.view(1, 1, *y_t.size())
     mask_t = torch.tensor(mask, dtype=bool, requires_grad=False, device=dncnn.device)
