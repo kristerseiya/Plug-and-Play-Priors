@@ -1,0 +1,3 @@
+[submodule "Denoisers"]
+	path = Denoisers
+	url = https://github.com/kristerseiya/Denoisers.git
