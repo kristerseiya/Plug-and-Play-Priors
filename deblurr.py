@@ -5,10 +5,12 @@ from PIL import Image
 import argparse
 from scipy.signal import correlate2d
 
-import tools
+import utils
 import func
 import pnp
 import noise
+
+from Denoisers import dnsr
 
 # command line arguments
 parser = argparse.ArgumentParser()
@@ -19,6 +21,7 @@ parser.add_argument('--prior', help='image prior option [\'dct\' or \'dncnn\' or
 parser.add_argument('--iter', help='number of iteration', type=int, default=10)
 parser.add_argument('--alpha', help='coeefficient of forward model', type=float, default=1000)
 parser.add_argument('--lambd', help='coeefficient of prior', type=float, default=1e-2)
+parser.add_argument('--sigma', help='bm3d parameter', type=float, default=3)
 parser.add_argument('--weights', help='path to weights', type=str, default='DnCNN/dncnn50.pth')
 parser.add_argument('--save', help='a directory to save result', type=str, default=None)
 parser.add_argument('--relax', help='relaxation for ADMM', type=float, default=0.)
@@ -28,7 +31,7 @@ args = parser.parse_args()
 # read image
 img = Image.open(args.image).convert('L')
 img = np.array(img) / 255.
-gauss_window = tools.get_gauss2d(args.window, args.window, args.sigma)
+gauss_window = utils.get_gauss2d(args.window, args.window, args.sigma)
 y = correlate2d(img, gauss_window, mode='same', boundary='wrap')
 
 # forward model
@@ -37,27 +40,25 @@ forward = func.CirculantMSE(y, gauss_window, input_shape=img.shape, alpha=args.a
 # use sparsity in DCT domain as a prior
 if args.prior == 'dct':
 
-    # prior
-    sparse_prior = func.L1Norm(args.lambd, input_shape=img.shape)
+    class SparseDCT:
+        def __init__(self, lambd):
+            self.lambd = lambd
 
-    # define transformation from x to v
-    class DCT_Transform:
         def __call__(self, x):
-            return tools.dct2d(x)
-
-        def inverse(self, v):
-            return tools.idct2d(v)
+            fx = utils.dct2d(x)
+            fx = np.maximum(np.abs(fx) - self.lambd, 0) * np.sign(fx)
+            return utils.idct2d(fx)
 
     # optimize
-    dct_transform = DCT_Transform()
-    optimizer = pnp.PnPADMM(forward, sparse_prior, transform=dct_transform)
+    sparse_dct = DCT_Transform()
+    optimizer = pnp.PnPADMM(forward, sparse_dct)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
 # use trained prior from DnCNN
 elif args.prior == 'dncnn':
 
-    dncnn = func.DnCNN(args.weights, use_tensor=False)
+    dncnn = dnsr.DnCNN(args.weights, use_tensor=False)
     optimizer = pnp.PnPADMM(forward, dncnn)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
@@ -65,7 +66,7 @@ elif args.prior == 'dncnn':
 # total variation norm
 elif args.prior == 'tv':
 
-    tvprox = func.TVNorm(args.lambd)
+    tvprox = dnsr.TVNorm(args.lambd)
     optimizer = pnp.PnPADMM(forward, tvprox)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
@@ -73,23 +74,24 @@ elif args.prior == 'tv':
 # block matching with 3D filter
 elif args.prior == 'bm3d':
 
-    bm3d = func.BM3D(args.lambd)
+    bm3d = dnsr.BM3D()
+    bm3d.set_param(args.sigma / 255.)
     optimizer = pnp.PnPADMM(forward, bm3d)
     optimizer.init(np.random.rand(*y.shape), np.zeros_like(y))
     recon = optimizer.run(iter=args.iter, relax=args.relax, return_value='x', verbose=args.verbose)
 
-img = tools.image2uint8(img)
-recon = tools.image2uint8(recon)
+img = utils.image2uint8(img)
+recon = utils.image2uint8(recon)
 
 # reconstruction quality assessment
-mse, psnr = tools.compute_mse(img, recon, scale=255)
-ssim = tools.ssim(img, recon, scale=255).mean()
+mse, psnr = utils.compute_mse(img, recon, scale=255)
+ssim = utils.ssim(img, recon, scale=255).mean()
 print('MSE: {:.5f}'.format(mse))
 print('PSNR: {:.5f}'.format(psnr))
 print('SSIM: {:.5f}'.format(ssim))
 
 # viewer
-tools.stackview([img, y, recon], width=20, method='Pillow')
+utils.stackview([img, y, recon], width=20, method='Pillow')
 
 if args.save != None:
     if not os.path.exists(args.save):
@@ -105,6 +107,6 @@ if args.save != None:
     original_path = os.path.join(args.save, original_name)
     blurred_name = os.path.join(args.save, blurred_name)
     restored_path = os.path.join(args.save, restored_name)
-    Image.fromarray(tools.image2uint8(img), 'L').save(original_path)
-    Image.fromarray(tools.image2uint8(y), 'L').save(blurred_name)
-    Image.fromarray(tools.image2uint8(recon), 'L').save(restored_path)
+    Image.fromarray(utils.image2uint8(img), 'L').save(original_path)
+    Image.fromarray(utils.image2uint8(y), 'L').save(blurred_name)
+    Image.fromarray(utils.image2uint8(recon), 'L').save(restored_path)

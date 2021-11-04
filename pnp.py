@@ -3,18 +3,10 @@ import numpy as np
 import copy
 
 
-class IdentityTransform:
-    def __call__(self, x):
-        return x
-
-    def inverse(self, v):
-        return v
-
 class PnPADMM:
-    def __init__(self, forward, denoiser, transform=None):
+    def __init__(self, forward, denoiser):
         self.forward = forward
         self.denoiser = denoiser
-        self.transform = transform if transform != None else IdentityTransform()
 
     def init(self, v, u):
         self.v_init = copy.deepcopy(v)
@@ -30,9 +22,9 @@ class PnPADMM:
             if verbose:
                 print('Iteration #{:d}'.format(i+1))
 
-            x = self.forward.prox(self.transform.inverse(v-u))
+            x = self.forward.prox(v-u)
 
-            x_relaxed = (1 - relax) * self.transform(x) + relax * v
+            x_relaxed = (1 - relax) * x + relax * v
             v = self.denoiser(x_relaxed+u)
 
             diff = x_relaxed - v

@@ -12,58 +12,7 @@ try:
 except:
     pass
 
-from DnCNN.utils import load_dncnn
-import tools
-
-
-# lambd * ||x||_1
-class L1Norm:
-    def __init__(self, lambd):
-        self.lambd = lambd
-
-    def prox(self, x):
-        return np.maximum(np.abs(x) - self.lambd, 0) * np.sign(x)
-
-class ProxTV:
-    def __init__(self, lambd):
-        self.lambd = lambd
-
-    def prox(self, x):
-        return prx_tv(x, self.lambd)
-
-class DnCNN:
-    def __init__(self, model_path, use_tensor=False,
-                 patch_size=-1, device=None):
-
-        if device == None:
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        else:
-            self.device = device
-
-        self.net = load_dncnn(model_path, device=device)
-        self.patch_size = patch_size
-        self.use_tensor = use_tensor
-
-    def __call__(self, x):
-        if not self.use_tensor:
-            x = torch.tensor(x, dtype=torch.float32,
-                             requires_grad=False, device=self.device)
-            if self.patch_size > 0:
-                x = x.view(batch_size, 1, self.patch_size, self.patch_size)
-            else:
-                x = x.view(1, 1, *x.size())
-            y = self.net(x)
-            y = y.cpu().squeeze(0).squeeze(0)
-            y = y.numpy()
-            return y
-        return self.net(x)
-
-class BM3D:
-    def __init__(self, sigma):
-        self.sigma = sigma
-
-    def __call__(self, x):
-        return pybm3d.bm3d.bm3d(x, self.sigma)
+import utils
 
 # 1/2*alpha*|| y - x ||_2^2
 class MSE:
@@ -114,7 +63,7 @@ class MaskMSETensor:
 # mse for deblurring
 class CirculantMSE:
     def __init__(self, y, window, input_shape, alpha=1.):
-        self.Hty = tools.transposed_correlate(y, window)
+        self.Hty = utils.transposed_correlate(y, window)
         self.window = window
         autocorr = correlate2d(window, window, mode='full')
         self.input_shape = input_shape
@@ -123,12 +72,12 @@ class CirculantMSE:
         self.autocorr = alpha * np.roll(autocorr, (-shift[0], -shift[1]), axis=(0, 1))
         self.alpha = alpha
         self.autocorr[0, 0] += 1
-        self.inv_window = tools.fft2d(self.autocorr)
+        self.inv_window = utils.fft2d(self.autocorr)
 
     def prox(self, x):
         tmp = self.alpha * self.Hty + x
-        tmp = tools.fft2d(tmp)
-        result = np.real(tools.ifft2d(tmp / self.inv_window))
+        tmp = utils.fft2d(tmp)
+        result = np.real(utils.ifft2d(tmp / self.inv_window))
         return result
 
 class AverageDownsampleMSE:
